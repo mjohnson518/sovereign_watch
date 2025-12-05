@@ -12,6 +12,9 @@ import type {
   CleanedSecurity,
   CleanedAuction,
   CleanedDebtSnapshot,
+  RawInterestExpenseRecord,
+  RawAvgInterestRateRecord,
+  CleanedEconomicIndicator,
 } from '../types/treasury';
 
 /**
@@ -165,6 +168,9 @@ export function cleanAuctionRecord(raw: RawAuctionRecord): CleanedAuction | null
     offeringAmount: parseAmount(raw.offering_amt),
     acceptedAmount: parseAmount(raw.accepted_amt),
     totalTendersAccepted: parseAmount(raw.total_tendered),
+    directBidderAccepted: parseAmount(raw.direct_bidder_accepted_amt),
+    indirectBidderAccepted: parseAmount(raw.indirect_bidder_accepted_amt),
+    primaryDealerAccepted: parseAmount(raw.primary_dealer_accepted_amt),
   };
 }
 
@@ -183,6 +189,26 @@ export function cleanDebtRecord(raw: RawDebtRecord): CleanedDebtSnapshot | null 
     totalPublicDebt,
     debtHeldByPublic: parseAmount(raw.debt_held_public_amt),
     intragovernmentalHoldings: parseAmount(raw.intragov_hold_amt),
+  };
+}
+
+/**
+ * Clean and validate economic indicators
+ */
+export function cleanEconomicIndicators(
+  expense: RawInterestExpenseRecord | null,
+  rate: RawAvgInterestRateRecord | null
+): CleanedEconomicIndicator | null {
+  if (!expense && !rate) return null;
+  
+  // Use the latest date available
+  const date = expense?.record_date || rate?.record_date;
+  if (!date) return null;
+  
+  return {
+    recordDate: normalizeDate(date) || date,
+    interestExpense: expense ? parseAmount(expense.fy_td_expense_amt) : null,
+    averageInterestRate: rate ? parseAmount(rate.avg_interest_rate_amt) : null,
   };
 }
 
@@ -207,4 +233,3 @@ export function cleanAuctionRecords(
     .map(cleanAuctionRecord)
     .filter((r): r is CleanedAuction => r !== null);
 }
-

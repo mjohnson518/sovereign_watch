@@ -78,6 +78,11 @@ CREATE TABLE IF NOT EXISTS treasury_auctions (
     accepted_amount DECIMAL(20, 2),
     total_tenders_accepted DECIMAL(20, 2),
     
+    -- Bidder composition
+    direct_bidder_accepted DECIMAL(20, 2),
+    indirect_bidder_accepted DECIMAL(20, 2),
+    primary_dealer_accepted DECIMAL(20, 2),
+    
     -- Metadata
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL

@@ -10,6 +10,8 @@ import type {
   RawMarketSecurityRecord,
   RawAuctionRecord,
   RawDebtRecord,
+  RawInterestExpenseRecord,
+  RawAvgInterestRateRecord,
 } from '../types/treasury';
 
 const BASE_URL = process.env.TREASURY_API_BASE_URL || 'https://api.fiscaldata.treasury.gov';
@@ -216,3 +218,42 @@ export async function fetchDebtHistory(
   }
 }
 
+/**
+ * Fetch interest expense data
+ */
+export async function fetchInterestExpense(): Promise<RawInterestExpenseRecord | null> {
+  try {
+    const response = await fetchFromTreasury<RawInterestExpenseRecord>(
+      '/services/api/fiscal_service/v2/accounting/od/interest_expense',
+      {
+        pageSize: 1,
+        sort: '-record_date',
+      }
+    );
+    
+    return response.data[0] || null;
+  } catch (error) {
+    console.error('[Treasury API] Error fetching interest expense:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch average interest rates
+ */
+export async function fetchAvgInterestRates(): Promise<RawAvgInterestRateRecord | null> {
+  try {
+    const response = await fetchFromTreasury<RawAvgInterestRateRecord>(
+      '/services/api/fiscal_service/v2/accounting/od/avg_interest_rates',
+      {
+        pageSize: 1,
+        sort: '-record_date',
+      }
+    );
+    
+    return response.data[0] || null;
+  } catch (error) {
+    console.error('[Treasury API] Error fetching avg interest rates:', error);
+    throw error;
+  }
+}

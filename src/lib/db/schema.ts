@@ -103,6 +103,11 @@ export const treasuryAuctions = pgTable(
     acceptedAmount: decimal('accepted_amount', { precision: 20, scale: 2 }),
     totalTendersAccepted: decimal('total_tenders_accepted', { precision: 20, scale: 2 }),
     
+    // Bidder composition
+    directBidderAccepted: decimal('direct_bidder_accepted', { precision: 20, scale: 2 }),
+    indirectBidderAccepted: decimal('indirect_bidder_accepted', { precision: 20, scale: 2 }),
+    primaryDealerAccepted: decimal('primary_dealer_accepted', { precision: 20, scale: 2 }),
+    
     // Metadata
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -163,6 +168,37 @@ export const maturityWallAggregates = pgTable(
   ]
 );
 
+// Economic Indicators (Health Metrics)
+export const economicIndicators = pgTable(
+  'economic_indicators',
+  {
+    id: serial('id').primaryKey(),
+    
+    // Record date (usually quarterly for GDP, daily/monthly for others)
+    recordDate: date('record_date').notNull().unique(),
+    
+    // GDP & Ratios
+    gdp: decimal('gdp', { precision: 20, scale: 2 }), // Annualized GDP
+    debtToGdpRatio: decimal('debt_to_gdp_ratio', { precision: 8, scale: 4 }),
+    
+    // Interest Expense
+    interestExpense: decimal('interest_expense', { precision: 20, scale: 2 }), // Annualized interest expense
+    averageInterestRate: decimal('average_interest_rate', { precision: 6, scale: 4 }),
+    
+    // Yield Curve (10Y - 2Y)
+    yield10y: decimal('yield_10y', { precision: 6, scale: 4 }),
+    yield2y: decimal('yield_2y', { precision: 6, scale: 4 }),
+    yieldCurveSpread: decimal('yield_curve_spread', { precision: 6, scale: 4 }), // 10Y - 2Y
+    
+    // Metadata
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('indicators_record_date_idx').on(table.recordDate),
+  ]
+);
+
 // ETL Job Log (for tracking ingestion runs)
 export const etlJobLog = pgTable(
   'etl_job_log',
@@ -196,6 +232,8 @@ export type NewDailyDebtSnapshot = typeof dailyDebtSnapshots.$inferInsert;
 export type MaturityWallAggregate = typeof maturityWallAggregates.$inferSelect;
 export type NewMaturityWallAggregate = typeof maturityWallAggregates.$inferInsert;
 
+export type EconomicIndicator = typeof economicIndicators.$inferSelect;
+export type NewEconomicIndicator = typeof economicIndicators.$inferInsert;
+
 export type EtlJobLog = typeof etlJobLog.$inferSelect;
 export type NewEtlJobLog = typeof etlJobLog.$inferInsert;
-

@@ -69,6 +69,9 @@ export interface RawAuctionRecord {
   offering_amt: string;
   accepted_amt: string;
   total_tendered: string;
+  direct_bidder_accepted_amt?: string;
+  indirect_bidder_accepted_amt?: string;
+  primary_dealer_accepted_amt?: string;
 }
 
 // Raw Debt to Penny Record
@@ -77,6 +80,19 @@ export interface RawDebtRecord {
   tot_pub_debt_out_amt: string;
   debt_held_public_amt: string;
   intragov_hold_amt: string;
+}
+
+// Raw Interest Expense Record
+export interface RawInterestExpenseRecord {
+  record_date: string;
+  fy_td_expense_amt: string; // Fiscal Year To Date
+  month_expense_amt: string; // Monthly
+}
+
+// Raw Average Interest Rate Record
+export interface RawAvgInterestRateRecord {
+  record_date: string;
+  avg_interest_rate_amt: string;
 }
 
 // Cleaned/Normalized Application Types
@@ -108,6 +124,9 @@ export interface CleanedAuction {
   offeringAmount: number | null;
   acceptedAmount: number | null;
   totalTendersAccepted: number | null;
+  directBidderAccepted: number | null;
+  indirectBidderAccepted: number | null;
+  primaryDealerAccepted: number | null;
 }
 
 export interface CleanedDebtSnapshot {
@@ -115,6 +134,12 @@ export interface CleanedDebtSnapshot {
   totalPublicDebt: number;
   debtHeldByPublic: number | null;
   intragovernmentalHoldings: number | null;
+}
+
+export interface CleanedEconomicIndicator {
+  recordDate: string;
+  interestExpense: number | null; // Annualized based on monthly or FYTD
+  averageInterestRate: number | null;
 }
 
 // API Response Types (what we serve to frontend)
@@ -173,3 +198,10 @@ export interface HistoricalDataPoint {
   total: number;
 }
 
+export interface HealthMetrics {
+  debtToGdp: number | null;
+  interestExpense: number | null; // Annualized in Billions
+  averageInterestRate: number | null;
+  yieldCurveSpread: number | null; // 10Y - 2Y
+  lastUpdated: string;
+}

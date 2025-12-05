@@ -8,6 +8,9 @@
 import { NextResponse } from 'next/server';
 import { fetchDebtToPenny } from '@/lib/etl/treasury-client';
 import { cleanDebtRecord } from '@/lib/etl/sanitizers';
+import { db } from '@/lib/db';
+import { dailyDebtSnapshots } from '@/lib/db/schema';
+import { desc } from 'drizzle-orm';
 import type { DebtSummary } from '@/lib/types/treasury';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +26,25 @@ function formatTrillions(amount: number): string {
 
 export async function GET() {
   try {
-    // Fetch live data from Treasury API
+    // 1. Try fetching from Database first
+    const dbSnapshot = await db.select()
+      .from(dailyDebtSnapshots)
+      .orderBy(desc(dailyDebtSnapshots.recordDate))
+      .limit(1);
+
+    if (dbSnapshot.length > 0) {
+      const snap = dbSnapshot[0];
+      const response: DebtSummary = {
+        totalDebt: parseFloat(snap.totalPublicDebt as string),
+        totalDebtFormatted: formatTrillions(parseFloat(snap.totalPublicDebt as string)),
+        debtHeldByPublic: snap.debtHeldByPublic ? parseFloat(snap.debtHeldByPublic as string) : null,
+        intragovernmental: snap.intragovernmentalHoldings ? parseFloat(snap.intragovernmentalHoldings as string) : null,
+        lastUpdated: snap.recordDate,
+      };
+      return NextResponse.json(response);
+    }
+
+    // 2. Fallback to Live API
     const rawDebt = await fetchDebtToPenny();
     
     if (!rawDebt) {
