@@ -95,6 +95,21 @@ export interface RawAvgInterestRateRecord {
   avg_interest_rate_amt: string;
 }
 
+// Raw Daily Treasury Yield Curve
+export interface RawYieldCurveRecord {
+  new_date: string; // Note: API field name can vary, usually "new_date" or "record_date"
+  record_date: string;
+  bc_10year: string; // 10Y Nominal
+  bc_2year: string;  // 2Y Nominal
+}
+
+// Raw Real Yield Curve (TIPS)
+export interface RawRealYieldCurveRecord {
+  new_date: string;
+  record_date: string;
+  tc_10year: string; // 10Y Real
+}
+
 // Cleaned/Normalized Application Types
 
 export interface CleanedSecurity {
@@ -140,6 +155,10 @@ export interface CleanedEconomicIndicator {
   recordDate: string;
   interestExpense: number | null; // Annualized based on monthly or FYTD
   averageInterestRate: number | null;
+  yield10y: number | null;
+  yield2y: number | null;
+  realYield10y: number | null;
+  breakeven10y: number | null;
 }
 
 // API Response Types (what we serve to frontend)
@@ -207,5 +226,7 @@ export interface HealthMetrics {
   interestExpense: number | null; // Annualized in Billions
   averageInterestRate: number | null;
   yieldCurveSpread: number | null; // 10Y - 2Y
+  realYield10y: number | null;
+  breakeven10y: number | null;
   lastUpdated: string;
 }

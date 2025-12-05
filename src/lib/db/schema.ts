@@ -190,6 +190,10 @@ export const economicIndicators = pgTable(
     yield2y: decimal('yield_2y', { precision: 6, scale: 4 }),
     yieldCurveSpread: decimal('yield_curve_spread', { precision: 6, scale: 4 }), // 10Y - 2Y
     
+    // Real Yields & Inflation
+    realYield10y: decimal('real_yield_10y', { precision: 6, scale: 4 }),
+    breakeven10y: decimal('breakeven_10y', { precision: 6, scale: 4 }),
+    
     // Metadata
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

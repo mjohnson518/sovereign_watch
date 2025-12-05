@@ -16,9 +16,11 @@ import { SupplyView } from '@/components/views/supply-view';
 import { DemandView } from '@/components/views/demand-view';
 import { SourcesView } from '@/components/views/sources-view';
 import { HealthView } from '@/components/views/health-view';
+import { InflationView } from '@/components/views/inflation-view';
+import { AboutView } from '@/components/views/about-view';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-type ViewType = 'health' | 'composition' | 'historical' | 'supply' | 'demand' | 'sources';
+type ViewType = 'health' | 'inflation' | 'composition' | 'historical' | 'supply' | 'demand' | 'sources' | 'about';
 
 export default function DashboardPage() {
   const [currentView, setCurrentView] = useState<ViewType>('health');
@@ -28,6 +30,8 @@ export default function DashboardPage() {
     switch (currentView) {
       case 'health':
         return <HealthView />;
+      case 'inflation':
+        return <InflationView />;
       case 'composition':
         return <CompositionView />;
       case 'historical':
@@ -38,6 +42,8 @@ export default function DashboardPage() {
         return <DemandView />;
       case 'sources':
         return <SourcesView />;
+      case 'about':
+        return <AboutView />;
       default:
         return <HealthView />;
     }

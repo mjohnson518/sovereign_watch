@@ -12,6 +12,8 @@ import type {
   RawDebtRecord,
   RawInterestExpenseRecord,
   RawAvgInterestRateRecord,
+  RawYieldCurveRecord,
+  RawRealYieldCurveRecord,
 } from '../types/treasury';
 
 const BASE_URL = process.env.TREASURY_API_BASE_URL || 'https://api.fiscaldata.treasury.gov';
@@ -255,5 +257,44 @@ export async function fetchAvgInterestRates(): Promise<RawAvgInterestRateRecord 
   } catch (error) {
     console.error('[Treasury API] Error fetching avg interest rates:', error);
     throw error;
+  }
+}
+
+/**
+ * Fetch Daily Treasury Yield Curve (Nominal)
+ */
+export async function fetchYieldCurve(): Promise<RawYieldCurveRecord | null> {
+  try {
+    const response = await fetchFromTreasury<RawYieldCurveRecord>(
+      '/services/api/fiscal_service/v2/accounting/od/daily_treasury_yield_curve',
+      {
+        pageSize: 1,
+        sort: '-record_date',
+      }
+    );
+    return response.data[0] || null;
+  } catch (error) {
+    console.error('[Treasury API] Error fetching yield curve:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch Daily Treasury Real Yield Curve (TIPS)
+ */
+export async function fetchRealYieldCurve(): Promise<RawRealYieldCurveRecord | null> {
+  try {
+    const response = await fetchFromTreasury<RawRealYieldCurveRecord>(
+      '/services/api/fiscal_service/v2/accounting/od/daily_treasury_real_yield_curve',
+      {
+        pageSize: 1,
+        sort: '-record_date',
+      }
+    );
+    return response.data[0] || null;
+  } catch (error) {
+    console.error('[Treasury API] Error fetching real yield curve:', error);
+    // Real yield curve endpoint might not exist or differ, fail gracefully
+    return null;
   }
 }

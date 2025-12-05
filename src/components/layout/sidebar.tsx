@@ -18,11 +18,13 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { id: 'health', label: 'Health Dashboard', icon: 'pulse' },
+  { id: 'inflation', label: 'Inflation & Yields', icon: 'activity' },
   { id: 'composition', label: 'Ownership (Sankey)', icon: 'chart' },
   { id: 'historical', label: '50-Year History', icon: 'history' },
   { id: 'supply', label: 'Supply (Maturity)', icon: 'stack' },
   { id: 'demand', label: 'Demand (Auctions)', icon: 'trend' },
   { id: 'sources', label: 'Data Sources', icon: 'database' },
+  { id: 'about', label: 'About', icon: 'info' },
 ];
 
 export function Sidebar({ currentView, onViewChange, onOpenAI }: SidebarProps) {
@@ -161,6 +163,18 @@ function NavIcon({ type, className }: { type: string; className?: string }) {
       return (
         <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case 'activity':
+      return (
+        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      );
+    case 'info':
+      return (
+        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       );
     case 'chart':

@@ -14,6 +14,8 @@ import type {
   CleanedDebtSnapshot,
   RawInterestExpenseRecord,
   RawAvgInterestRateRecord,
+  RawYieldCurveRecord,
+  RawRealYieldCurveRecord,
   CleanedEconomicIndicator,
 } from '../types/treasury';
 
@@ -197,18 +199,41 @@ export function cleanDebtRecord(raw: RawDebtRecord): CleanedDebtSnapshot | null 
  */
 export function cleanEconomicIndicators(
   expense: RawInterestExpenseRecord | null,
-  rate: RawAvgInterestRateRecord | null
+  rate: RawAvgInterestRateRecord | null,
+  yieldCurve: RawYieldCurveRecord | null,
+  realYield: RawRealYieldCurveRecord | null
 ): CleanedEconomicIndicator | null {
-  if (!expense && !rate) return null;
-  
   // Use the latest date available
-  const date = expense?.record_date || rate?.record_date;
-  if (!date) return null;
+  const dates = [
+    expense?.record_date, 
+    rate?.record_date,
+    yieldCurve?.record_date,
+    realYield?.record_date
+  ].filter(Boolean) as string[];
+  
+  if (dates.length === 0) return null;
+  
+  // Sort dates and pick the latest one for the record
+  dates.sort().reverse();
+  const date = dates[0];
+  
+  const yield10y = yieldCurve ? parseNumber(yieldCurve.bc_10year) : null;
+  const yield2y = yieldCurve ? parseNumber(yieldCurve.bc_2year) : null;
+  const real10y = realYield ? parseNumber(realYield.tc_10year) : null;
+  
+  let breakeven10y = null;
+  if (yield10y !== null && real10y !== null) {
+    breakeven10y = yield10y - real10y;
+  }
   
   return {
     recordDate: normalizeDate(date) || date,
     interestExpense: expense ? parseAmount(expense.fy_td_expense_amt) : null,
     averageInterestRate: rate ? parseAmount(rate.avg_interest_rate_amt) : null,
+    yield10y,
+    yield2y,
+    realYield10y: real10y,
+    breakeven10y,
   };
 }
 

@@ -203,23 +203,38 @@ export async function GET(request: Request) {
     // Step 4: Economic Indicators
     console.log('[Cron] Step 4: Fetching economic indicators...');
     try {
-      const { fetchInterestExpense, fetchAvgInterestRates } = await import('@/lib/etl/treasury-client');
+      const { 
+        fetchInterestExpense, 
+        fetchAvgInterestRates,
+        fetchYieldCurve,
+        fetchRealYieldCurve
+      } = await import('@/lib/etl/treasury-client');
       const { cleanEconomicIndicators } = await import('@/lib/etl/sanitizers');
       
-      const [expense, rates] = await Promise.all([
+      const [expense, rates, yields, realYields] = await Promise.all([
         fetchInterestExpense(),
-        fetchAvgInterestRates()
+        fetchAvgInterestRates(),
+        fetchYieldCurve(),
+        fetchRealYieldCurve()
       ]);
       
-      const cleaned = cleanEconomicIndicators(expense, rates);
+      const cleaned = cleanEconomicIndicators(expense, rates, yields, realYields);
       
       if (cleaned) {
+        const spread = (cleaned.yield10y !== null && cleaned.yield2y !== null)
+          ? (cleaned.yield10y - cleaned.yield2y)
+          : null;
+
         await db.insert(economicIndicators).values({
           recordDate: cleaned.recordDate,
           interestExpense: cleaned.interestExpense?.toString(),
           averageInterestRate: cleaned.averageInterestRate?.toString(),
-          // Placeholder for GDP - typically updated manually or via separate paid API
-          // debtToGdpRatio: ... 
+          yield10y: cleaned.yield10y?.toString(),
+          yield2y: cleaned.yield2y?.toString(),
+          realYield10y: cleaned.realYield10y?.toString(),
+          breakeven10y: cleaned.breakeven10y?.toString(),
+          yieldCurveSpread: spread?.toString(),
+          // debtToGdpRatio: ... (Placeholder)
         }).onConflictDoNothing();
         
         results.indicators = {
@@ -253,6 +268,7 @@ export async function GET(request: Request) {
     revalidatePath('/');
     revalidatePath('/api/debt');
     revalidatePath('/api/maturity-wall');
+    revalidatePath('/api/health');
     
     const duration = Date.now() - startTime;
     
