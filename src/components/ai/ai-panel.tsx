@@ -7,18 +7,12 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useChat } from 'ai/react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { analyzeData } from '@/app/actions/ai';
 import { cn } from '@/lib/utils';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
 
 interface AIPanelProps {
   open: boolean;
@@ -34,16 +28,21 @@ const QUICK_PROMPTS = [
 ];
 
 export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPanelProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: 'Hello! I am your AI Macro Strategist. Navigate to any chart (like Maturity or Demand) and ask me to analyze it!',
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const { messages, input, setInput, handleSubmit, isLoading, append } = useChat({
+    api: '/api/chat',
+    body: {
+      context: contextData ? JSON.stringify(contextData) : `Current View: ${currentView}`,
+    },
+    initialMessages: [
+      {
+        id: 'welcome',
+        role: 'assistant',
+        content: 'Hello! I am your AI Macro Strategist. Navigate to any chart (like Maturity or Demand) and ask me to analyze it!',
+      },
+    ],
+  });
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -52,59 +51,25 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
     }
   }, [messages]);
 
-  const handleSubmit = async (prompt?: string) => {
+  const handleCustomSubmit = async (prompt?: string) => {
     const messageText = prompt || input.trim();
     if (!messageText || isLoading) return;
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: messageText,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-
-    // Add placeholder for AI response
-    const aiMessageId = (Date.now() + 1).toString();
-    setMessages((prev) => [
-      ...prev,
-      { id: aiMessageId, role: 'assistant', content: 'Analyzing...' },
-    ]);
-
-    try {
-      const result = await analyzeData(messageText, {
-        view: currentView as 'composition' | 'historical' | 'supply' | 'demand' | 'sources',
-        additionalContext: contextData ? JSON.stringify(contextData) : undefined,
-      });
-
-      // Update with response
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aiMessageId 
-            ? { ...msg, content: result.error || result.text || 'No response generated.' } 
-            : msg
-        )
-      );
-    } catch (error) {
-      console.error('AI Error:', error);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === aiMessageId
-            ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
-            : msg
-        )
-      );
-    } finally {
-      setIsLoading(false);
+    if (prompt) {
+        // Programmatic submission
+        await append({ role: 'user', content: prompt });
+    } else {
+        // If it's the input field, we can't easily simulate the form event for handleSubmit
+        // So we manually append
+        await append({ role: 'user', content: messageText });
+        setInput('');
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleCustomSubmit();
     }
   };
 
@@ -140,7 +105,7 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
                 />
               </div>
             ))}
-            {isLoading && messages[messages.length - 1]?.content === '' && (
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex items-center gap-2 text-stone-500 dark:text-zinc-500 text-sm">
                 <LoadingDots />
                 Thinking...
@@ -161,7 +126,7 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
               className="flex-1"
             />
             <Button 
-              onClick={() => handleSubmit()} 
+              onClick={() => handleCustomSubmit()} 
               disabled={isLoading || !input.trim()}
               size="icon"
             >
@@ -176,7 +141,7 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
                 key={qp.label}
                 variant="outline"
                 size="sm"
-                onClick={() => handleSubmit(qp.prompt)}
+                onClick={() => handleCustomSubmit(qp.prompt)}
                 disabled={isLoading}
                 className="text-xs whitespace-nowrap"
               >

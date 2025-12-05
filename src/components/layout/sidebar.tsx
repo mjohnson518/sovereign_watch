@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/providers/theme-provider';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 interface SidebarProps {
   currentView: string;
@@ -16,6 +17,7 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
+  { id: 'health', label: 'Health Dashboard', icon: 'pulse' },
   { id: 'composition', label: 'Ownership (Sankey)', icon: 'chart' },
   { id: 'historical', label: '50-Year History', icon: 'history' },
   { id: 'supply', label: 'Supply (Maturity)', icon: 'stack' },
@@ -26,8 +28,54 @@ const NAV_ITEMS = [
 export function Sidebar({ currentView, onViewChange, onOpenAI }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
 
-  return (
+  // Desktop Sidebar
+  const DesktopSidebar = () => (
     <aside className="w-64 bg-white dark:bg-zinc-900 border-r border-stone-200 dark:border-zinc-800 flex flex-col hidden md:flex z-20">
+      <SidebarContent 
+        currentView={currentView} 
+        onViewChange={onViewChange} 
+        onOpenAI={onOpenAI} 
+        theme={theme} 
+        toggleTheme={toggleTheme} 
+      />
+    </aside>
+  );
+
+  // Mobile Navigation (Hamburger)
+  const MobileNav = () => (
+    <div className="md:hidden fixed top-3 left-4 z-50">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="bg-white dark:bg-zinc-900">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 p-0">
+          <SidebarContent 
+            currentView={currentView} 
+            onViewChange={onViewChange} 
+            onOpenAI={onOpenAI} 
+            theme={theme} 
+            toggleTheme={toggleTheme} 
+          />
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+
+  return (
+    <>
+      <DesktopSidebar />
+      <MobileNav />
+    </>
+  );
+}
+
+function SidebarContent({ currentView, onViewChange, onOpenAI, theme, toggleTheme }: any) {
+  return (
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-900">
       {/* Logo */}
       <div className="p-6 border-b border-stone-200 dark:border-zinc-800">
         <h1 className="text-xl font-bold tracking-tight text-stone-900 dark:text-zinc-50">
@@ -100,7 +148,7 @@ export function Sidebar({ currentView, onViewChange, onOpenAI }: SidebarProps) {
         <div>Fiscal Data: Connected</div>
         <div>Update Frequency: Daily</div>
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -109,6 +157,12 @@ function NavIcon({ type, className }: { type: string; className?: string }) {
   const iconClass = cn('inline-block', className);
   
   switch (type) {
+    case 'pulse':
+      return (
+        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
     case 'chart':
       return (
         <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -167,4 +221,3 @@ function SunIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-

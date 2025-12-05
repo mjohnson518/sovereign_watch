@@ -15,16 +15,19 @@ import { HistoricalView } from '@/components/views/historical-view';
 import { SupplyView } from '@/components/views/supply-view';
 import { DemandView } from '@/components/views/demand-view';
 import { SourcesView } from '@/components/views/sources-view';
+import { HealthView } from '@/components/views/health-view';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-type ViewType = 'composition' | 'historical' | 'supply' | 'demand' | 'sources';
+type ViewType = 'health' | 'composition' | 'historical' | 'supply' | 'demand' | 'sources';
 
 export default function DashboardPage() {
-  const [currentView, setCurrentView] = useState<ViewType>('composition');
+  const [currentView, setCurrentView] = useState<ViewType>('health');
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const renderView = () => {
     switch (currentView) {
+      case 'health':
+        return <HealthView />;
       case 'composition':
         return <CompositionView />;
       case 'historical':
@@ -36,7 +39,7 @@ export default function DashboardPage() {
       case 'sources':
         return <SourcesView />;
       default:
-        return <CompositionView />;
+        return <HealthView />;
     }
   };
 
@@ -56,7 +59,7 @@ export default function DashboardPage() {
 
         {/* Scrollable Content */}
         <ScrollArea className="flex-1">
-          <div className="p-8 space-y-8 animate-fade-in">
+          <div className="p-8 space-y-8 animate-fade-in pb-24 md:pb-8">
             {renderView()}
           </div>
         </ScrollArea>

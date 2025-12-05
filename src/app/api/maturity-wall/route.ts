@@ -2,13 +2,16 @@
  * API Route: /api/maturity-wall
  * 
  * Returns pre-aggregated maturity wall data.
- * Data is aggregated server-side from MSPD Table 3 securities.
+ * Prioritizes Database (cached) data, falls back to Live API.
  */
 
 import { NextResponse } from 'next/server';
 import { fetchSecuritiesDetail } from '@/lib/etl/treasury-client';
 import { cleanSecurityRecords } from '@/lib/etl/sanitizers';
 import { aggregateMaturityWall } from '@/lib/etl/aggregators';
+import { db } from '@/lib/db';
+import { treasurySecurities } from '@/lib/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
 import type { MaturityWallData } from '@/lib/types/treasury';
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +24,7 @@ interface MaturityWallResponse {
     recordDate: string;
     yearsIncluded: number;
     totalSecuritiesProcessed: number;
+    source: 'database' | 'api';
   };
 }
 
@@ -32,8 +36,60 @@ export async function GET(request: Request) {
   const years = yearsParam ? parseInt(yearsParam, 10) : 10;
   
   try {
-    // Fetch raw securities data from Treasury API
-    // Using 5000 records to capture the full monthly report
+    // 1. Try Database First
+    // Get the latest record date available in DB
+    const latestRecord = await db.select({ date: treasurySecurities.recordDate })
+      .from(treasurySecurities)
+      .orderBy(desc(treasurySecurities.recordDate))
+      .limit(1);
+
+    if (latestRecord.length > 0) {
+      const latestDate = latestRecord[0].date;
+      
+      // Fetch all securities for that date
+      // We need to cast types because Drizzle returns strings for decimals
+      const dbSecurities = await db.select()
+        .from(treasurySecurities)
+        .where(eq(treasurySecurities.recordDate, latestDate));
+        
+      if (dbSecurities.length > 0) {
+        // Map DB result to clean format required by aggregator
+        const cleanedSecurities = dbSecurities.map(s => ({
+          recordDate: s.recordDate,
+          cusip: s.cusip,
+          securityType: s.securityType,
+          securityTypeDesc: s.securityTypeDesc || '',
+          securityClass: s.securityClass,
+          issueDate: s.issueDate,
+          maturityDate: s.maturityDate,
+          maturityYear: s.maturityYear,
+          outstandingAmount: parseFloat(s.outstandingAmount),
+          interestRate: s.interestRate ? parseFloat(s.interestRate) : null,
+        }));
+
+        const currentYear = new Date().getFullYear();
+        const maturityWall = aggregateMaturityWall(
+          cleanedSecurities,
+          currentYear + 1,
+          currentYear + 1 + years
+        );
+
+        const response: MaturityWallResponse = {
+          data: maturityWall,
+          meta: {
+            computedAt: new Date().toISOString(),
+            recordDate: latestDate,
+            yearsIncluded: years,
+            totalSecuritiesProcessed: cleanedSecurities.length,
+            source: 'database',
+          },
+        };
+        return NextResponse.json(response);
+      }
+    }
+
+    // 2. Fallback to Live API
+    console.log('Database empty or stale, fetching live securities...');
     const rawSecurities = await fetchSecuritiesDetail(5000);
     
     if (!rawSecurities.length) {
@@ -43,18 +99,10 @@ export async function GET(request: Request) {
       );
     }
     
-    // Get the latest record date
     const latestDate = rawSecurities[0].record_date;
-    
-    // Filter to only the latest report's data
-    const latestReportRecords = rawSecurities.filter(
-      r => r.record_date === latestDate
-    );
-    
-    // Clean and validate records
+    const latestReportRecords = rawSecurities.filter(r => r.record_date === latestDate);
     const cleanedSecurities = cleanSecurityRecords(latestReportRecords);
     
-    // Aggregate into maturity wall format
     const currentYear = new Date().getFullYear();
     const maturityWall = aggregateMaturityWall(
       cleanedSecurities,
@@ -69,6 +117,7 @@ export async function GET(request: Request) {
         recordDate: latestDate,
         yearsIncluded: years,
         totalSecuritiesProcessed: cleanedSecurities.length,
+        source: 'api',
       },
     };
     
@@ -85,4 +134,3 @@ export async function GET(request: Request) {
     );
   }
 }
-

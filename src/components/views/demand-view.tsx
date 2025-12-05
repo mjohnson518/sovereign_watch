@@ -8,6 +8,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DemandChart } from '@/components/charts/demand-chart';
+import { BidderChart } from '@/components/charts/bidder-chart';
 
 export function DemandView() {
   return (
@@ -17,7 +18,7 @@ export function DemandView() {
           Demand: The &quot;Popularity Contest&quot;
         </h2>
         <p className="text-stone-500 dark:text-zinc-400 text-sm mt-1">
-          Live Bid-to-Cover Ratios from Treasury Auctions.
+          Live Bid-to-Cover Ratios and Bidder Composition from Treasury Auctions.
         </p>
       </div>
 
@@ -54,6 +55,21 @@ export function DemandView() {
         <Card className="lg:col-span-2">
           <CardContent className="pt-6">
             <DemandChart />
+          </CardContent>
+        </Card>
+
+        {/* Bidder Composition */}
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Bidder Composition</CardTitle>
+            <CardDescription>
+              Who is buying the debt? <span className="text-emerald-600 font-bold">Indirect</span> (Foreign/Central Banks) vs 
+              <span className="text-blue-600 font-bold"> Direct</span> (Domestic Funds) vs 
+              <span className="text-red-600 font-bold"> Primary Dealers</span> (Forced Buyers).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <BidderChart />
           </CardContent>
         </Card>
       </div>

@@ -159,6 +159,10 @@ export interface AuctionDemandData {
   ratio: number;
   type: string;
   term: string | null;
+  direct?: number;
+  indirect?: number;
+  dealers?: number;
+  accepted?: number;
 }
 
 export interface DebtSummary {

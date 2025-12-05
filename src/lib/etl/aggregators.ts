@@ -107,6 +107,10 @@ export function aggregateAuctionDemand(
     ratio: a.bidToCoverRatio!,
     type: a.securityTypeRaw,
     term: a.securityTerm,
+    direct: a.directBidderAccepted ?? undefined,
+    indirect: a.indirectBidderAccepted ?? undefined,
+    dealers: a.primaryDealerAccepted ?? undefined,
+    accepted: a.acceptedAmount ?? undefined,
   }));
 }
 
