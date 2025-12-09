@@ -1,19 +1,20 @@
 'use client';
 
 /**
- * Bidder Composition Chart Component
- * 
- * Stacked area chart showing who is buying the debt (Direct vs Indirect vs Dealers).
+ * Bidder Composition Chart - Bloomberg Terminal 2.0
+ *
+ * Stacked area chart showing who is buying the debt
+ * (Direct vs Indirect vs Dealers) with terminal styling.
  */
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from '@/components/providers/theme-provider';
 import { ChartSkeleton } from './chart-skeleton';
-import { Button } from '@/components/ui/button';
+import { TimeframeButtons } from '@/components/ui/button';
 import type { AuctionDemandData } from '@/lib/types/treasury';
 
-const Plot = dynamic(() => import('react-plotly.js'), { 
+const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
   loading: () => <ChartSkeleton type="area" className="h-[400px]" />
 });
@@ -22,12 +23,11 @@ interface AuctionsResponse {
   data: AuctionDemandData[];
 }
 
-const TIMEFRAMES = ['1y', '3y', '5y', '10y'] as const;
-type Timeframe = typeof TIMEFRAMES[number];
+const TIMEFRAMES = ['1y', '3y', '5y', '10y'];
 
 export function BidderChart() {
   const { theme } = useTheme();
-  const [timeframe, setTimeframe] = useState<Timeframe>('3y');
+  const [timeframe, setTimeframe] = useState('3y');
   const [data, setData] = useState<AuctionDemandData[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,19 +47,29 @@ export function BidderChart() {
         setLoading(false);
       }
     }
-    
+
     fetchData();
   }, [timeframe]);
 
   const isDark = theme === 'dark';
-  const textColor = isDark ? '#A1A1AA' : '#57534E';
-  const gridColor = isDark ? '#3F3F46' : '#E7E5E4';
-  const bgColor = isDark ? '#27272A' : '#FFFFFF';
+
+  // Terminal-style colors
+  const colors = {
+    text: isDark ? '#8B99A6' : '#57534E',
+    grid: isDark ? 'rgba(51, 144, 255, 0.1)' : '#E7E5E4',
+    background: 'transparent',
+    title: isDark ? '#E4E8ED' : '#1C1917',
+    // Bidder type colors
+    indirect: isDark ? '#2DD4BF' : '#14B8A6',
+    direct: isDark ? '#60A5FA' : '#3B82F6',
+    dealers: isDark ? '#F87171' : '#EF4444',
+  };
 
   if (error) {
     return (
-      <div className="h-[400px] flex items-center justify-center text-red-500">
-        Failed to load bidder data: {error}
+      <div className="h-[400px] flex flex-col items-center justify-center border border-border rounded bg-card">
+        <div className="text-destructive font-mono text-sm mb-2">ERROR: FAILED TO LOAD DATA</div>
+        <p className="text-muted-foreground text-xs">{error}</p>
       </div>
     );
   }
@@ -79,76 +89,102 @@ export function BidderChart() {
     {
       x: processedData.map(d => d.date),
       y: processedData.map(d => d.indirectPct),
-      name: 'Indirect (Foreign/Central Banks)',
+      name: 'Indirect (Foreign)',
       stackgroup: 'one',
       mode: 'none',
-      fillcolor: '#059669', // Green
+      fillcolor: colors.indirect,
+      hovertemplate: '<b>%{x}</b><br>Indirect: %{y:.1f}%<extra></extra>',
     },
     {
       x: processedData.map(d => d.date),
       y: processedData.map(d => d.directPct),
-      name: 'Direct (Domestic Funds)',
+      name: 'Direct (Domestic)',
       stackgroup: 'one',
       mode: 'none',
-      fillcolor: '#3b82f6', // Blue
+      fillcolor: colors.direct,
+      hovertemplate: '<b>%{x}</b><br>Direct: %{y:.1f}%<extra></extra>',
     },
     {
       x: processedData.map(d => d.date),
       y: processedData.map(d => d.dealersPct),
-      name: 'Primary Dealers (Market Makers)',
+      name: 'Primary Dealers',
       stackgroup: 'one',
       mode: 'none',
-      fillcolor: '#ef4444', // Red
+      fillcolor: colors.dealers,
+      hovertemplate: '<b>%{x}</b><br>Dealers: %{y:.1f}%<extra></extra>',
     },
   ];
 
   const layout: Partial<Plotly.Layout> = {
-    title: { text: 'Bidder Composition (%)', font: { color: textColor } },
-    yaxis: { 
-      title: { text: '% of Accepted Bids' }, 
-      range: [0, 100], 
-      color: textColor, 
-      gridcolor: gridColor 
+    yaxis: {
+      title: {
+        text: '% of Accepted',
+        font: { size: 11, color: colors.text }
+      },
+      range: [0, 100],
+      fixedrange: true,
+      color: colors.text,
+      gridcolor: colors.grid,
+      gridwidth: 1,
+      tickfont: { size: 10, family: 'JetBrains Mono, monospace' },
+      zeroline: false,
     },
-    xaxis: { 
-      color: textColor, 
-      gridcolor: gridColor 
+    xaxis: {
+      title: {
+        text: 'Auction Date',
+        font: { size: 11, color: colors.text }
+      },
+      color: colors.text,
+      gridcolor: colors.grid,
+      tickfont: { size: 10, family: 'JetBrains Mono, monospace' },
     },
-    margin: { t: 40, b: 40, l: 60, r: 20 },
-    legend: { 
-      orientation: 'h', 
-      y: 1.1, 
-      font: { color: textColor } 
+    margin: { t: 20, b: 60, l: 60, r: 20 },
+    legend: {
+      orientation: 'h',
+      y: -0.15,
+      x: 0.5,
+      xanchor: 'center',
+      font: { size: 10, color: colors.text, family: 'IBM Plex Sans, sans-serif' },
+      bgcolor: 'transparent',
     },
     hovermode: 'x unified',
-    paper_bgcolor: bgColor,
-    plot_bgcolor: bgColor,
+    paper_bgcolor: colors.background,
+    plot_bgcolor: colors.background,
+    hoverlabel: {
+      bgcolor: isDark ? '#1a1f2e' : '#ffffff',
+      bordercolor: isDark ? 'rgba(51, 144, 255, 0.3)' : '#e7e5e4',
+      font: {
+        family: 'JetBrains Mono, monospace',
+        size: 11,
+        color: colors.title,
+      },
+    },
   };
 
   return (
     <div className="w-full">
-      <div className="flex space-x-2 mb-4 justify-end">
-        {TIMEFRAMES.map((tf) => (
-          <Button
-            key={tf}
-            variant={timeframe === tf ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setTimeframe(tf)}
-            className="text-xs"
-          >
-            {tf.toUpperCase()}
-          </Button>
-        ))}
+      {/* Timeframe Controls */}
+      <div className="flex justify-end mb-4">
+        <TimeframeButtons
+          options={TIMEFRAMES}
+          value={timeframe}
+          onChange={setTimeframe}
+        />
       </div>
 
-      <div className="h-[400px]">
+      {/* Chart */}
+      <div className="h-[400px] chart-container">
         {loading ? (
           <ChartSkeleton type="area" className="h-full" />
         ) : (
           <Plot
             data={plotData}
             layout={layout}
-            config={{ responsive: true, displayModeBar: false }}
+            config={{
+              responsive: true,
+              displayModeBar: false,
+              staticPlot: false,
+            }}
             className="w-full h-full"
           />
         )}
@@ -156,4 +192,3 @@ export function BidderChart() {
     </div>
   );
 }
-

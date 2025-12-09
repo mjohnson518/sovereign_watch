@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * Main Dashboard Page
- * 
- * Sovereign Watch - Live Treasury Analytics Dashboard
+ * Main Dashboard Page - Bloomberg Terminal 2.0
+ *
+ * Sovereign Watch - Next-generation real-time US Treasury debt analytics terminal
  */
 
 import { useState } from 'react';
@@ -50,7 +50,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-stone-50 dark:bg-zinc-950">
+    <div className="h-screen flex overflow-hidden bg-background terminal-grid noise-overlay">
       {/* Sidebar */}
       <Sidebar
         currentView={currentView}
@@ -65,10 +65,23 @@ export default function DashboardPage() {
 
         {/* Scrollable Content */}
         <ScrollArea className="flex-1">
-          <div className="p-8 space-y-8 animate-fade-in pb-24 md:pb-8">
+          <div className="p-6 pb-24 md:pb-6">
             {renderView()}
           </div>
         </ScrollArea>
+
+        {/* Floating command hint (mobile) */}
+        <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+          <button
+            onClick={() => setAiPanelOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-full shadow-lg hover:border-primary/50 transition-colors"
+          >
+            <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            <span className="text-xs font-medium">Ask AI</span>
+          </button>
+        </div>
       </main>
 
       {/* AI Panel */}

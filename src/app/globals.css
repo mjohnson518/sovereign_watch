@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
 
 @plugin "tailwindcss-animate";
 
@@ -7,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -42,125 +43,688 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Bloomberg Terminal 2.0 Custom Colors */
+  --color-terminal-black: var(--terminal-black);
+  --color-terminal-blue: var(--terminal-blue);
+  --color-terminal-amber: var(--terminal-amber);
+  --color-terminal-green: var(--terminal-green);
+  --color-terminal-red: var(--terminal-red);
+  --color-terminal-cyan: var(--terminal-cyan);
+  --color-terminal-purple: var(--terminal-purple);
+  --color-terminal-gray: var(--terminal-gray);
 }
+
+/* ============================================
+   BLOOMBERG TERMINAL 2.0 DESIGN SYSTEM
+   Dark-first, data-dense, professional
+   ============================================ */
 
 :root {
-  --radius: 0.625rem;
-  --background: 0 0% 100%;
-  --foreground: 20 14.3% 4.1%;
+  --radius: 0.25rem;
+
+  /* Terminal Core Colors */
+  --terminal-black: 220 20% 4%;
+  --terminal-blue: 210 100% 56%;
+  --terminal-amber: 38 92% 50%;
+  --terminal-green: 142 71% 45%;
+  --terminal-red: 0 84% 60%;
+  --terminal-cyan: 187 85% 53%;
+  --terminal-purple: 262 83% 58%;
+  --terminal-gray: 220 9% 46%;
+
+  /* Light Mode - Clean Professional */
+  --background: 220 14% 96%;
+  --foreground: 220 20% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 20 14.3% 4.1%;
+  --card-foreground: 220 20% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 20 14.3% 4.1%;
-  --primary: 24 9.8% 10%;
-  --primary-foreground: 60 9.1% 97.8%;
-  --secondary: 60 4.8% 95.9%;
-  --secondary-foreground: 24 9.8% 10%;
-  --muted: 60 4.8% 95.9%;
-  --muted-foreground: 25 5.3% 44.7%;
-  --accent: 60 4.8% 95.9%;
-  --accent-foreground: 24 9.8% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --border: 20 5.9% 90%;
-  --input: 20 5.9% 90%;
-  --ring: 20 14.3% 4.1%;
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 240 5.9% 10%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
+  --popover-foreground: 220 20% 10%;
+  --primary: 210 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 90%;
+  --secondary-foreground: 220 20% 20%;
+  --muted: 220 14% 92%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 38 92% 50%;
+  --accent-foreground: 220 20% 10%;
+  --destructive: 0 84% 60%;
+  --border: 220 13% 87%;
+  --input: 220 13% 87%;
+  --ring: 210 100% 50%;
+
+  /* Chart Colors - Light Mode */
+  --chart-1: 210 100% 50%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 187 85% 53%;
+
+  /* Sidebar - Light Mode */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 220 20% 25%;
+  --sidebar-primary: 210 100% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 14% 95%;
+  --sidebar-accent-foreground: 220 20% 10%;
+  --sidebar-border: 220 13% 90%;
+  --sidebar-ring: 210 100% 50%;
 }
 
+/* ============================================
+   DARK MODE - BLOOMBERG TERMINAL AESTHETIC
+   ============================================ */
+
 .dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-  --sidebar: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 48%;
+  /* Deep terminal blacks with blue undertone */
+  --background: 222 47% 5%;
+  --foreground: 210 20% 95%;
+
+  /* Card styling - slightly elevated from background */
+  --card: 222 47% 7%;
+  --card-foreground: 210 20% 95%;
+
+  /* Popover/dropdown styling */
+  --popover: 222 47% 8%;
+  --popover-foreground: 210 20% 95%;
+
+  /* Primary accent - Electric blue */
+  --primary: 210 100% 56%;
+  --primary-foreground: 222 47% 5%;
+
+  /* Secondary - Muted blue-gray */
+  --secondary: 220 20% 15%;
+  --secondary-foreground: 210 20% 90%;
+
+  /* Muted colors for subtle elements */
+  --muted: 220 20% 12%;
+  --muted-foreground: 220 15% 55%;
+
+  /* Accent - Amber/Gold */
+  --accent: 38 92% 50%;
+  --accent-foreground: 222 47% 5%;
+
+  /* Destructive - Bloomberg Red */
+  --destructive: 0 84% 60%;
+
+  /* Borders - Subtle glow effect */
+  --border: 220 20% 18%;
+  --input: 220 20% 15%;
+  --ring: 210 100% 56%;
+
+  /* Chart Colors - Vibrant for dark background */
+  --chart-1: 210 100% 60%;
+  --chart-2: 142 76% 55%;
+  --chart-3: 38 95% 55%;
+  --chart-4: 262 90% 65%;
+  --chart-5: 187 90% 55%;
+
+  /* Sidebar - Terminal panel */
+  --sidebar: 222 47% 6%;
+  --sidebar-foreground: 210 15% 75%;
+  --sidebar-primary: 210 100% 56%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
+  --sidebar-accent: 220 20% 12%;
+  --sidebar-accent-foreground: 210 20% 95%;
+  --sidebar-border: 220 20% 15%;
+  --sidebar-ring: 210 100% 56%;
 }
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
 
 @layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    letter-spacing: -0.01em;
+  }
+
+  /* Monospace elements */
+  code, kbd, pre, samp, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-feature-settings: "liga" 1, "calt" 1;
   }
 }
 
-/* Chart container styles */
+/* ============================================
+   TERMINAL GRID PATTERN BACKGROUND
+   ============================================ */
+
+.terminal-grid {
+  background-image:
+    linear-gradient(rgba(51, 144, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(51, 144, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .terminal-grid {
+  background-image:
+    linear-gradient(rgba(51, 144, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(51, 144, 255, 0.05) 1px, transparent 1px);
+}
+
+/* ============================================
+   SCANLINE EFFECT (SUBTLE)
+   ============================================ */
+
+.scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.03) 0px,
+    rgba(0, 0, 0, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark .scanlines::before {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15) 0px,
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+}
+
+/* ============================================
+   DATA TICKER ANIMATION
+   ============================================ */
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-scroll {
+  animation: ticker-scroll 60s linear infinite;
+}
+
+.ticker-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* ============================================
+   GLOWING DATA ELEMENTS
+   ============================================ */
+
+.glow-blue {
+  text-shadow: 0 0 10px hsl(210 100% 56% / 0.5);
+}
+
+.glow-green {
+  text-shadow: 0 0 10px hsl(142 71% 45% / 0.5);
+}
+
+.glow-red {
+  text-shadow: 0 0 10px hsl(0 84% 60% / 0.5);
+}
+
+.glow-amber {
+  text-shadow: 0 0 10px hsl(38 92% 50% / 0.5);
+}
+
+/* Box glow effects */
+.box-glow-blue {
+  box-shadow: 0 0 20px hsl(210 100% 56% / 0.15), inset 0 0 20px hsl(210 100% 56% / 0.05);
+}
+
+.box-glow-green {
+  box-shadow: 0 0 20px hsl(142 71% 45% / 0.15), inset 0 0 20px hsl(142 71% 45% / 0.05);
+}
+
+.box-glow-red {
+  box-shadow: 0 0 20px hsl(0 84% 60% / 0.15), inset 0 0 20px hsl(0 84% 60% / 0.05);
+}
+
+.box-glow-amber {
+  box-shadow: 0 0 20px hsl(38 92% 50% / 0.15), inset 0 0 20px hsl(38 92% 50% / 0.05);
+}
+
+/* ============================================
+   DATA VALUE STYLING
+   ============================================ */
+
+.data-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.data-value-positive {
+  color: hsl(142 71% 45%);
+}
+
+.data-value-negative {
+  color: hsl(0 84% 60%);
+}
+
+.data-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ============================================
+   TERMINAL PANEL STYLING
+   ============================================ */
+
+.terminal-panel {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  position: relative;
+}
+
+.terminal-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(210 100% 56% / 0.3) 50%,
+    transparent 100%
+  );
+}
+
+.terminal-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.3);
+}
+
+.terminal-panel-title {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--foreground));
+}
+
+.terminal-panel-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.625rem;
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: 2px;
+  background: hsl(var(--primary) / 0.15);
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.3);
+}
+
+/* ============================================
+   CHART CONTAINER STYLING
+   ============================================ */
+
 .js-plotly-plot .plotly .modebar {
   display: none !important;
 }
 
-/* Smooth transitions for theme changes */
-html {
-  transition: background-color 0.3s ease, color 0.3s ease;
+.chart-container {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-/* Custom scrollbar */
+.chart-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: hsl(var(--muted) / 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Animation utilities */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(210 100% 56% / 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(210 100% 56% / 0.5);
+}
+
+/* ============================================
+   STATUS INDICATOR ANIMATIONS
+   ============================================ */
+
+@keyframes pulse-live {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 hsl(142 71% 45% / 0.7);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 4px hsl(142 71% 45% / 0);
+  }
+}
+
+.status-live {
+  animation: pulse-live 2s infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ============================================
+   FADE IN ANIMATIONS
+   ============================================ */
+
 @keyframes fade-in {
   from {
     opacity: 0;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* Staggered animations */
+.stagger-1 { animation-delay: 0.05s; opacity: 0; }
+.stagger-2 { animation-delay: 0.1s; opacity: 0; }
+.stagger-3 { animation-delay: 0.15s; opacity: 0; }
+.stagger-4 { animation-delay: 0.2s; opacity: 0; }
+.stagger-5 { animation-delay: 0.25s; opacity: 0; }
+.stagger-6 { animation-delay: 0.3s; opacity: 0; }
+
+/* ============================================
+   DATA TABLE STYLING
+   ============================================ */
+
+.data-table {
+  width: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted-foreground));
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.3);
+}
+
+.data-table td {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table tbody tr:hover {
+  background: hsl(var(--primary) / 0.05);
+}
+
+.data-table tbody tr:hover td {
+  color: hsl(var(--foreground));
+}
+
+/* ============================================
+   METRIC CARD STYLING
+   ============================================ */
+
+.metric-card {
+  position: relative;
+  padding: 1.25rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--metric-color, hsl(var(--primary)));
+}
+
+.metric-card-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.5rem;
+}
+
+.metric-card-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: hsl(var(--foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-card-delta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.metric-card-delta.positive {
+  color: hsl(142 71% 45%);
+}
+
+.metric-card-delta.negative {
+  color: hsl(0 84% 60%);
+}
+
+/* ============================================
+   TOOLTIP STYLING
+   ============================================ */
+
+.terminal-tooltip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: hsl(222 47% 10%);
+  border: 1px solid hsl(210 100% 56% / 0.3);
+  border-radius: var(--radius);
+  color: hsl(210 20% 95%);
+  box-shadow: 0 4px 12px hsl(222 47% 5% / 0.5);
+}
+
+/* ============================================
+   KEYBOARD SHORTCUT STYLING
+   ============================================ */
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.625rem;
+  font-weight: 500;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 3px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ============================================
+   NOISE TEXTURE OVERLAY
+   ============================================ */
+
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.dark .noise-overlay::after {
+  opacity: 0.03;
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ============================================
+   SELECTION STYLING
+   ============================================ */
+
+::selection {
+  background: hsl(210 100% 56% / 0.3);
+  color: hsl(var(--foreground));
+}
+
+/* ============================================
+   FOCUS STATES
+   ============================================ */
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+@media (max-width: 768px) {
+  .metric-card-value {
+    font-size: 1.5rem;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem 0.75rem;
+  }
 }

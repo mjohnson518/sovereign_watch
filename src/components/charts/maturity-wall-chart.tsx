@@ -1,20 +1,22 @@
 'use client';
 
 /**
- * Maturity Wall Chart Component
- * 
- * Stacked bar chart showing debt maturing by year and security type.
+ * Maturity Wall Chart Component - Bloomberg Terminal 2.0
+ *
+ * Stacked bar chart showing debt maturing by year and security type
+ * with professional terminal styling.
  */
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from '@/components/providers/theme-provider';
 import { ChartSkeleton } from './chart-skeleton';
+import { Button } from '@/components/ui/button';
 import type { MaturityWallData } from '@/lib/types/treasury';
 
-const Plot = dynamic(() => import('react-plotly.js'), { 
+const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
-  loading: () => <ChartSkeleton type="bar" className="h-[450px]" />
+  loading: () => <ChartSkeleton type="bar" className="h-[400px]" />
 });
 
 interface MaturityResponse {
@@ -44,97 +46,165 @@ export function MaturityWallChart() {
         setLoading(false);
       }
     }
-    
+
     fetchData();
   }, []);
 
   if (loading) {
-    return <ChartSkeleton type="bar" className="h-[450px]" />;
+    return <ChartSkeleton type="bar" className="h-[400px]" />;
   }
 
   if (error || !data) {
     return (
-      <div className="h-[450px] flex flex-col items-center justify-center text-red-500">
-        <span className="mb-2">Failed to load maturity data</span>
-        <button 
+      <div className="h-[400px] flex flex-col items-center justify-center border border-border rounded bg-card">
+        <div className="text-destructive font-mono text-sm mb-2">ERROR: FAILED TO LOAD DATA</div>
+        <p className="text-muted-foreground text-xs mb-4">{error}</p>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => window.location.reload()}
-          className="px-3 py-1 bg-stone-100 dark:bg-zinc-800 border rounded hover:bg-stone-200 dark:hover:bg-zinc-700 text-stone-900 dark:text-zinc-100"
         >
-          Retry
-        </button>
+          RETRY CONNECTION
+        </Button>
       </div>
     );
   }
 
   const isDark = theme === 'dark';
-  const textColor = isDark ? '#A1A1AA' : '#57534E';
-  const gridColor = isDark ? '#3F3F46' : '#E7E5E4';
-  const bgColor = isDark ? '#27272A' : '#FFFFFF';
-  const titleColor = isDark ? '#FAFAFA' : '#1C1917';
+
+  // Terminal-style colors
+  const colors = {
+    text: isDark ? '#8B99A6' : '#57534E',
+    grid: isDark ? 'rgba(51, 144, 255, 0.1)' : '#E7E5E4',
+    background: 'transparent',
+    title: isDark ? '#E4E8ED' : '#1C1917',
+    // Security type colors
+    bills: isDark ? '#60A5FA' : '#94a3b8',
+    notes: isDark ? '#A78BFA' : '#475569',
+    bonds: isDark ? '#818CF8' : '#1e293b',
+    tips: isDark ? '#2DD4BF' : '#14b8a6',
+    frn: isDark ? '#FBBF24' : '#f59e0b',
+  };
 
   const years = data.data.map(d => d.year.toString());
 
   const plotData: Plotly.Data[] = [
     {
       x: years,
-      y: data.data.map(d => d.bills),
+      y: data.data.map(d => d.bills / 1e9),
       name: 'Bills',
       type: 'bar',
-      marker: { color: '#94a3b8' },
+      marker: {
+        color: colors.bills,
+        line: { width: 0 }
+      },
+      hovertemplate: '%{y:.1f}B<extra>Bills</extra>',
     },
     {
       x: years,
-      y: data.data.map(d => d.notes),
+      y: data.data.map(d => d.notes / 1e9),
       name: 'Notes',
       type: 'bar',
-      marker: { color: '#475569' },
+      marker: {
+        color: colors.notes,
+        line: { width: 0 }
+      },
+      hovertemplate: '%{y:.1f}B<extra>Notes</extra>',
     },
     {
       x: years,
-      y: data.data.map(d => d.bonds),
+      y: data.data.map(d => d.bonds / 1e9),
       name: 'Bonds',
       type: 'bar',
-      marker: { color: '#1e293b' },
+      marker: {
+        color: colors.bonds,
+        line: { width: 0 }
+      },
+      hovertemplate: '%{y:.1f}B<extra>Bonds</extra>',
+    },
+    {
+      x: years,
+      y: data.data.map(d => (d.tips || 0) / 1e9),
+      name: 'TIPS',
+      type: 'bar',
+      marker: {
+        color: colors.tips,
+        line: { width: 0 }
+      },
+      hovertemplate: '%{y:.1f}B<extra>TIPS</extra>',
+    },
+    {
+      x: years,
+      y: data.data.map(d => (d.frn || 0) / 1e9),
+      name: 'FRN',
+      type: 'bar',
+      marker: {
+        color: colors.frn,
+        line: { width: 0 }
+      },
+      hovertemplate: '%{y:.1f}B<extra>FRN</extra>',
     },
   ];
 
   const layout: Partial<Plotly.Layout> = {
     barmode: 'stack',
-    title: { 
-      text: 'The Maturity Wall (Next 10 Years)', 
-      font: { color: titleColor } 
-    },
-    yaxis: { 
-      title: { text: 'Amount Maturing ($)' }, 
-      color: textColor, 
-      gridcolor: gridColor,
+    bargap: 0.15,
+    yaxis: {
+      title: {
+        text: 'Amount ($B)',
+        font: { size: 11, color: colors.text },
+      },
+      color: colors.text,
+      gridcolor: colors.grid,
+      gridwidth: 1,
+      tickfont: { size: 10, family: 'JetBrains Mono, monospace' },
       rangemode: 'tozero',
+      zeroline: false,
     },
-    xaxis: { 
-      title: { text: 'Year of Maturity' }, 
-      color: textColor, 
-      gridcolor: gridColor,
+    xaxis: {
+      title: {
+        text: 'Maturity Year',
+        font: { size: 11, color: colors.text },
+      },
+      color: colors.text,
+      gridcolor: colors.grid,
+      tickfont: { size: 10, family: 'JetBrains Mono, monospace' },
       type: 'category',
     },
-    margin: { t: 40, b: 40, l: 60, r: 20 },
-    legend: { 
-      orientation: 'h', 
-      y: 1.1, 
-      font: { color: textColor } 
+    margin: { t: 20, b: 60, l: 70, r: 20 },
+    legend: {
+      orientation: 'h',
+      y: -0.15,
+      x: 0.5,
+      xanchor: 'center',
+      font: { size: 10, color: colors.text, family: 'IBM Plex Sans, sans-serif' },
+      bgcolor: 'transparent',
     },
-    paper_bgcolor: bgColor,
-    plot_bgcolor: bgColor,
+    paper_bgcolor: colors.background,
+    plot_bgcolor: colors.background,
+    hoverlabel: {
+      bgcolor: isDark ? '#1a1f2e' : '#ffffff',
+      bordercolor: isDark ? 'rgba(51, 144, 255, 0.3)' : '#e7e5e4',
+      font: {
+        family: 'JetBrains Mono, monospace',
+        size: 11,
+        color: colors.title,
+      },
+    },
   };
 
   return (
-    <div className="w-full h-[450px]">
+    <div className="w-full h-[400px] chart-container">
       <Plot
         data={plotData}
         layout={layout}
-        config={{ responsive: true, displayModeBar: false }}
+        config={{
+          responsive: true,
+          displayModeBar: false,
+          staticPlot: false,
+        }}
         className="w-full h-full"
       />
     </div>
   );
 }
-

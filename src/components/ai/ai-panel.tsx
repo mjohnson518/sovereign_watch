@@ -1,9 +1,10 @@
 'use client';
 
 /**
- * AI Analyst Panel Component
- * 
- * Slide-out panel for interacting with the Sovereign AI analyst.
+ * AI Analyst Panel - Bloomberg Terminal 2.0
+ *
+ * Command-style AI chat interface with terminal aesthetics,
+ * quick prompts, and context-aware analysis.
  */
 
 import { useRef, useEffect } from 'react';
@@ -12,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface AIPanelProps {
@@ -22,14 +24,15 @@ interface AIPanelProps {
 }
 
 const QUICK_PROMPTS = [
-  { label: 'Analyze View', prompt: 'Analyze the current data and highlight key insights' },
-  { label: 'Identify Risks', prompt: 'What are the main risks based on this data?' },
-  { label: 'Trends', prompt: 'Summarize the key trends visible in this data' },
+  { label: 'ANALYZE', prompt: 'Analyze the current data and highlight key insights', icon: '📊' },
+  { label: 'RISKS', prompt: 'What are the main risks based on this data?', icon: '⚠️' },
+  { label: 'TRENDS', prompt: 'Summarize the key trends visible in this data', icon: '📈' },
+  { label: 'COMPARE', prompt: 'How does current data compare to historical averages?', icon: '🔄' },
 ];
 
 export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+
   const { messages, input, setInput, handleSubmit, isLoading, append } = useChat({
     api: '/api/chat',
     body: {
@@ -39,7 +42,7 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
       {
         id: 'welcome',
         role: 'assistant',
-        content: 'Hello! I am your AI Macro Strategist. Navigate to any chart (like Maturity or Demand) and ask me to analyze it!',
+        content: '**SOVEREIGN AI MACRO STRATEGIST INITIALIZED**\n\nI analyze Treasury debt data, auction metrics, and fiscal indicators. Navigate to any view and ask me to analyze it.\n\n**Capabilities:**\n- Real-time data analysis\n- Risk assessment\n- Trend identification\n- Historical comparisons',
       },
     ],
   });
@@ -55,15 +58,8 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
     const messageText = prompt || input.trim();
     if (!messageText || isLoading) return;
 
-    if (prompt) {
-        // Programmatic submission
-        await append({ role: 'user', content: prompt });
-    } else {
-        // If it's the input field, we can't easily simulate the form event for handleSubmit
-        // So we manually append
-        await append({ role: 'user', content: messageText });
-        setInput('');
-    }
+    await append({ role: 'user', content: messageText });
+    if (!prompt) setInput('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -75,79 +71,145 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:w-96 flex flex-col p-0">
-        <SheetHeader className="p-4 border-b bg-stone-50 dark:bg-zinc-900">
-          <SheetTitle className="flex items-center gap-2">
-            <SparklesIcon className="h-5 w-5 text-purple-500" />
-            Sovereign AI
-          </SheetTitle>
-          <SheetDescription>Macro Strategist Agent</SheetDescription>
+      <SheetContent className="w-full sm:w-[420px] flex flex-col p-0 bg-card border-l border-border">
+        {/* Header */}
+        <SheetHeader className="p-4 border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                <SparklesIcon className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <SheetTitle className="text-sm font-semibold">SOVEREIGN AI</SheetTitle>
+                <SheetDescription className="text-[10px] uppercase tracking-wider">
+                  Macro Strategist Agent
+                </SheetDescription>
+              </div>
+            </div>
+            <Badge variant="success" className="text-[9px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1 status-live" />
+              ONLINE
+            </Badge>
+          </div>
+
+          {/* Context indicator */}
+          <div className="mt-3 flex items-center gap-2 text-[10px]">
+            <span className="text-muted-foreground">CONTEXT:</span>
+            <Badge variant="terminal" className="text-[9px]">
+              {currentView.toUpperCase()} VIEW
+            </Badge>
+          </div>
         </SheetHeader>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-          <div className="space-y-4">
+        <ScrollArea className="flex-1" ref={scrollRef}>
+          <div className="p-4 space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  'p-3 rounded-lg text-sm max-w-[90%] animate-in fade-in-0 slide-in-from-bottom-2',
-                  message.role === 'user'
-                    ? 'bg-stone-800 text-white ml-auto'
-                    : 'bg-stone-100 dark:bg-zinc-800 text-stone-900 dark:text-zinc-100 mr-auto border border-stone-200 dark:border-zinc-700'
+                  'animate-fade-in',
+                  message.role === 'user' ? 'flex justify-end' : ''
                 )}
               >
-                <div 
-                  className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ 
-                    __html: formatMarkdown(message.content) 
-                  }} 
-                />
+                <div
+                  className={cn(
+                    'max-w-[90%] rounded text-xs',
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground px-3 py-2'
+                      : 'bg-muted/50 border border-border px-3 py-3'
+                  )}
+                >
+                  {message.role === 'assistant' && (
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                      <div className="w-4 h-4 rounded bg-primary/20 flex items-center justify-center">
+                        <SparklesIcon className="h-2.5 w-2.5 text-primary" />
+                      </div>
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                        AI Response
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className={cn(
+                      "prose prose-xs max-w-none",
+                      message.role === 'assistant'
+                        ? "dark:prose-invert prose-p:text-muted-foreground prose-strong:text-foreground prose-headings:text-foreground"
+                        : ""
+                    )}
+                    dangerouslySetInnerHTML={{
+                      __html: formatMarkdown(message.content)
+                    }}
+                  />
+                </div>
               </div>
             ))}
+
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
-              <div className="flex items-center gap-2 text-stone-500 dark:text-zinc-500 text-sm">
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded border border-border w-fit">
                 <LoadingDots />
-                Thinking...
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Processing query...
+                </span>
               </div>
             )}
           </div>
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="p-4 border-t bg-stone-50 dark:bg-zinc-900">
+        <div className="border-t border-border bg-muted/20 p-4 space-y-3">
+          {/* Quick Prompts */}
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {QUICK_PROMPTS.map((qp) => (
+              <button
+                key={qp.label}
+                onClick={() => handleCustomSubmit(qp.prompt)}
+                disabled={isLoading}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium rounded border transition-colors whitespace-nowrap",
+                  "bg-card border-border text-muted-foreground",
+                  "hover:border-primary/50 hover:text-foreground",
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                <span>{qp.icon}</span>
+                <span>{qp.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Input Field */}
           <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about this data..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button 
-              onClick={() => handleCustomSubmit()} 
+            <div className="flex-1 relative">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about the data..."
+                disabled={isLoading}
+                className="bg-card border-border text-xs pr-8 font-mono placeholder:font-sans"
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                <span className="kbd text-[8px]">↵</span>
+              </div>
+            </div>
+            <Button
+              onClick={() => handleCustomSubmit()}
               disabled={isLoading || !input.trim()}
               size="icon"
+              className="shrink-0"
             >
               <SendIcon className="h-4 w-4" />
             </Button>
           </div>
-          
-          {/* Quick Prompts */}
-          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-            {QUICK_PROMPTS.map((qp) => (
-              <Button
-                key={qp.label}
-                variant="outline"
-                size="sm"
-                onClick={() => handleCustomSubmit(qp.prompt)}
-                disabled={isLoading}
-                className="text-xs whitespace-nowrap"
-              >
-                {qp.label}
-              </Button>
-            ))}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between text-[9px] text-muted-foreground/60">
+            <span>Powered by Gemini Pro</span>
+            <span className="flex items-center gap-1">
+              <span className="kbd">ESC</span>
+              <span>Close</span>
+            </span>
           </div>
         </div>
       </SheetContent>
@@ -155,11 +217,14 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
   );
 }
 
-// Simple markdown formatter
+// Simple markdown formatter with better styling
 function formatMarkdown(text: string): string {
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code class="px-1 py-0.5 bg-muted rounded text-[10px] font-mono">$1</code>')
+    .replace(/\n\n/g, '</p><p class="mt-2">')
+    .replace(/\n- /g, '</p><p class="mt-1 pl-3 border-l-2 border-primary/30">')
     .replace(/\n/g, '<br />');
 }
 
@@ -182,10 +247,9 @@ function SendIcon({ className }: { className?: string }) {
 function LoadingDots() {
   return (
     <span className="inline-flex gap-1">
-      <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-      <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-      <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+      <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+      <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+      <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
     </span>
   );
 }
-
