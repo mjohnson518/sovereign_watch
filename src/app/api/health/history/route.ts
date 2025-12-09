@@ -2,11 +2,11 @@
  * API Route: /api/health/history
  * 
  * Returns historical economic indicators (Yields, Inflation Breakevens).
+ * Returns empty array if database is unavailable.
  */
 
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { economicIndicators } from '@/lib/db/schema';
+import { getDb, economicIndicators } from '@/lib/db';
 import { desc, gte } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,6 @@ export async function GET(request: Request) {
   const timeframe = searchParams.get('timeframe') || '1y';
   
   const now = new Date();
-  let startDate: string;
   
   switch (timeframe) {
     case '1y': now.setFullYear(now.getFullYear() - 1); break;
@@ -25,9 +24,16 @@ export async function GET(request: Request) {
     case '5y': now.setFullYear(now.getFullYear() - 5); break;
     default: now.setFullYear(now.getFullYear() - 1);
   }
-  startDate = now.toISOString().split('T')[0];
+  const startDate = now.toISOString().split('T')[0];
 
   try {
+    const db = getDb();
+    
+    if (!db) {
+      // Return empty array if DB not available - charts will show "no data"
+      return NextResponse.json([]);
+    }
+
     const data = await db.select({
       date: economicIndicators.recordDate,
       yield10y: economicIndicators.yield10y,
@@ -49,10 +55,7 @@ export async function GET(request: Request) {
     return NextResponse.json(chartData);
   } catch (error) {
     console.error('[API /health/history] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch historical data' },
-      { status: 500 }
-    );
+    return NextResponse.json([]);
   }
 }
 

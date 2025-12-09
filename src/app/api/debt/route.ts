@@ -2,14 +2,13 @@
  * API Route: /api/debt
  * 
  * Returns the latest total debt snapshot.
- * Fetches live from Treasury API if database is empty.
+ * Fetches live from Treasury API if database is empty or unavailable.
  */
 
 import { NextResponse } from 'next/server';
 import { fetchDebtToPenny } from '@/lib/etl/treasury-client';
 import { cleanDebtRecord } from '@/lib/etl/sanitizers';
-import { db } from '@/lib/db';
-import { dailyDebtSnapshots } from '@/lib/db/schema';
+import { getDb, dailyDebtSnapshots } from '@/lib/db';
 import { desc } from 'drizzle-orm';
 import type { DebtSummary } from '@/lib/types/treasury';
 
@@ -26,22 +25,29 @@ function formatTrillions(amount: number): string {
 
 export async function GET() {
   try {
-    // 1. Try fetching from Database first
-    const dbSnapshot = await db.select()
-      .from(dailyDebtSnapshots)
-      .orderBy(desc(dailyDebtSnapshots.recordDate))
-      .limit(1);
+    // 1. Try fetching from Database first (if available)
+    const db = getDb();
+    if (db) {
+      try {
+        const dbSnapshot = await db.select()
+          .from(dailyDebtSnapshots)
+          .orderBy(desc(dailyDebtSnapshots.recordDate))
+          .limit(1);
 
-    if (dbSnapshot.length > 0) {
-      const snap = dbSnapshot[0];
-      const response: DebtSummary = {
-        totalDebt: parseFloat(snap.totalPublicDebt as string),
-        totalDebtFormatted: formatTrillions(parseFloat(snap.totalPublicDebt as string)),
-        debtHeldByPublic: snap.debtHeldByPublic ? parseFloat(snap.debtHeldByPublic as string) : null,
-        intragovernmental: snap.intragovernmentalHoldings ? parseFloat(snap.intragovernmentalHoldings as string) : null,
-        lastUpdated: snap.recordDate,
-      };
-      return NextResponse.json(response);
+        if (dbSnapshot.length > 0) {
+          const snap = dbSnapshot[0];
+          const response: DebtSummary = {
+            totalDebt: parseFloat(snap.totalPublicDebt as string),
+            totalDebtFormatted: formatTrillions(parseFloat(snap.totalPublicDebt as string)),
+            debtHeldByPublic: snap.debtHeldByPublic ? parseFloat(snap.debtHeldByPublic as string) : null,
+            intragovernmental: snap.intragovernmentalHoldings ? parseFloat(snap.intragovernmentalHoldings as string) : null,
+            lastUpdated: snap.recordDate,
+          };
+          return NextResponse.json(response);
+        }
+      } catch (dbError) {
+        console.warn('[API /debt] Database query failed, falling back to API:', dbError);
+      }
     }
 
     // 2. Fallback to Live API

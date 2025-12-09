@@ -9,9 +9,8 @@ import { NextResponse } from 'next/server';
 import { fetchSecuritiesDetail } from '@/lib/etl/treasury-client';
 import { cleanSecurityRecords } from '@/lib/etl/sanitizers';
 import { aggregateMaturityWall } from '@/lib/etl/aggregators';
-import { db } from '@/lib/db';
-import { treasurySecurities } from '@/lib/db/schema';
-import { desc, eq, sql } from 'drizzle-orm';
+import { getDb, treasurySecurities } from '@/lib/db';
+import { desc, eq } from 'drizzle-orm';
 import type { MaturityWallData } from '@/lib/types/treasury';
 
 export const dynamic = 'force-dynamic';
@@ -36,55 +35,61 @@ export async function GET(request: Request) {
   const years = yearsParam ? parseInt(yearsParam, 10) : 10;
   
   try {
-    // 1. Try Database First
-    // Get the latest record date available in DB
-    const latestRecord = await db.select({ date: treasurySecurities.recordDate })
-      .from(treasurySecurities)
-      .orderBy(desc(treasurySecurities.recordDate))
-      .limit(1);
+    // 1. Try Database First (if available)
+    const db = getDb();
+    if (db) {
+      try {
+        // Get the latest record date available in DB
+        const latestRecord = await db.select({ date: treasurySecurities.recordDate })
+          .from(treasurySecurities)
+          .orderBy(desc(treasurySecurities.recordDate))
+          .limit(1);
 
-    if (latestRecord.length > 0) {
-      const latestDate = latestRecord[0].date;
-      
-      // Fetch all securities for that date
-      // We need to cast types because Drizzle returns strings for decimals
-      const dbSecurities = await db.select()
-        .from(treasurySecurities)
-        .where(eq(treasurySecurities.recordDate, latestDate));
-        
-      if (dbSecurities.length > 0) {
-        // Map DB result to clean format required by aggregator
-        const cleanedSecurities = dbSecurities.map(s => ({
-          recordDate: s.recordDate,
-          cusip: s.cusip,
-          securityType: s.securityType,
-          securityTypeDesc: s.securityTypeDesc || '',
-          securityClass: s.securityClass,
-          issueDate: s.issueDate,
-          maturityDate: s.maturityDate,
-          maturityYear: s.maturityYear,
-          outstandingAmount: parseFloat(s.outstandingAmount),
-          interestRate: s.interestRate ? parseFloat(s.interestRate) : null,
-        }));
+        if (latestRecord.length > 0) {
+          const latestDate = latestRecord[0].date;
+          
+          // Fetch all securities for that date
+          const dbSecurities = await db.select()
+            .from(treasurySecurities)
+            .where(eq(treasurySecurities.recordDate, latestDate));
+            
+          if (dbSecurities.length > 0) {
+            // Map DB result to clean format required by aggregator
+            const cleanedSecurities = dbSecurities.map(s => ({
+              recordDate: s.recordDate,
+              cusip: s.cusip,
+              securityType: s.securityType,
+              securityTypeDesc: s.securityTypeDesc || '',
+              securityClass: s.securityClass,
+              issueDate: s.issueDate,
+              maturityDate: s.maturityDate,
+              maturityYear: s.maturityYear,
+              outstandingAmount: parseFloat(s.outstandingAmount),
+              interestRate: s.interestRate ? parseFloat(s.interestRate) : null,
+            }));
 
-        const currentYear = new Date().getFullYear();
-        const maturityWall = aggregateMaturityWall(
-          cleanedSecurities,
-          currentYear + 1,
-          currentYear + 1 + years
-        );
+            const currentYear = new Date().getFullYear();
+            const maturityWall = aggregateMaturityWall(
+              cleanedSecurities,
+              currentYear + 1,
+              currentYear + 1 + years
+            );
 
-        const response: MaturityWallResponse = {
-          data: maturityWall,
-          meta: {
-            computedAt: new Date().toISOString(),
-            recordDate: latestDate,
-            yearsIncluded: years,
-            totalSecuritiesProcessed: cleanedSecurities.length,
-            source: 'database',
-          },
-        };
-        return NextResponse.json(response);
+            const response: MaturityWallResponse = {
+              data: maturityWall,
+              meta: {
+                computedAt: new Date().toISOString(),
+                recordDate: latestDate,
+                yearsIncluded: years,
+                totalSecuritiesProcessed: cleanedSecurities.length,
+                source: 'database',
+              },
+            };
+            return NextResponse.json(response);
+          }
+        }
+      } catch (dbError) {
+        console.warn('[API /maturity-wall] Database query failed, falling back to API:', dbError);
       }
     }
 

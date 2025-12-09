@@ -6,8 +6,8 @@
  * Slide-out panel for interacting with the Sovereign AI analyst.
  */
 
-import { useState, useRef, useEffect } from 'react';
-import { useChat } from 'ai/react';
+import { useRef, useEffect } from 'react';
+import { useChat } from '@ai-sdk/react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

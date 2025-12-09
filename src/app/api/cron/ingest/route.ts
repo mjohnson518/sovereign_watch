@@ -15,16 +15,14 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/db';
+import { getDb, isDbAvailable } from '@/lib/db';
 import {
   dailyDebtSnapshots,
   treasurySecurities,
   treasuryAuctions,
-  maturityWallAggregates,
   economicIndicators,
   etlJobLog,
 } from '@/lib/db/schema';
-import { sql } from 'drizzle-orm';
 
 // Vercel Cron configuration
 export const dynamic = 'force-dynamic';
@@ -58,6 +56,15 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
+    );
+  }
+  
+  // Check if database is available
+  const db = getDb();
+  if (!db || !isDbAvailable) {
+    return NextResponse.json(
+      { error: 'Database not configured. Set POSTGRES_URL to enable data ingestion.' },
+      { status: 503 }
     );
   }
   
