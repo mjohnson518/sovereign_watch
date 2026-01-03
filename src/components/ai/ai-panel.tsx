@@ -7,8 +7,9 @@
  * quick prompts, and context-aware analysis.
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useChat } from '@ai-sdk/react';
+import { TextStreamChatTransport } from 'ai';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,20 +33,35 @@ const QUICK_PROMPTS = [
 
 export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
 
-  const { messages, input, setInput, handleSubmit, isLoading, append } = useChat({
+  // Create transport with context in body
+  const transport = useMemo(() => new TextStreamChatTransport({
     api: '/api/chat',
     body: {
       context: contextData ? JSON.stringify(contextData) : `Current View: ${currentView}`,
     },
-    initialMessages: [
-      {
-        id: 'welcome',
-        role: 'assistant',
-        content: '**SOVEREIGN AI MACRO STRATEGIST INITIALIZED**\n\nI analyze Treasury debt data, auction metrics, and fiscal indicators. Navigate to any view and ask me to analyze it.\n\n**Capabilities:**\n- Real-time data analysis\n- Risk assessment\n- Trend identification\n- Historical comparisons',
-      },
-    ],
+  }), [contextData, currentView]);
+
+  const initialMessages = useMemo(() => [
+    {
+      id: 'welcome',
+      role: 'assistant' as 'system' | 'user' | 'assistant',
+      parts: [
+        {
+          type: 'text' as const,
+          text: '**SOVEREIGN AI MACRO STRATEGIST INITIALIZED**\n\nI analyze Treasury debt data, auction metrics, and fiscal indicators. Navigate to any view and ask me to analyze it.\n\n**Capabilities:**\n- Real-time data analysis\n- Risk assessment\n- Trend identification\n- Historical comparisons',
+        },
+      ],
+    },
+  ], []);
+
+  const { messages, sendMessage, status } = useChat({
+    transport,
+    messages: initialMessages,
   });
+
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -58,7 +74,7 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
     const messageText = prompt || input.trim();
     if (!messageText || isLoading) return;
 
-    await append({ role: 'user', content: messageText });
+    await sendMessage({ text: messageText });
     if (!prompt) setInput('');
   };
 
@@ -138,7 +154,7 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
                         : ""
                     )}
                     dangerouslySetInnerHTML={{
-                      __html: formatMarkdown(message.content)
+                      __html: formatMarkdown(getMessageText(message))
                     }}
                   />
                 </div>
@@ -215,6 +231,15 @@ export function AIPanel({ open, onOpenChange, currentView, contextData }: AIPane
       </SheetContent>
     </Sheet>
   );
+}
+
+// Helper to extract text content from UI message parts
+function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
+  if (!message.parts) return '';
+  return message.parts
+    .filter((part): part is { type: 'text'; text: string } => part.type === 'text' && typeof part.text === 'string')
+    .map(part => part.text)
+    .join('\n');
 }
 
 // Simple markdown formatter with better styling
