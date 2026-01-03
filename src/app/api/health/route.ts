@@ -19,6 +19,8 @@ const DEFAULT_METRICS: HealthMetrics = {
   interestExpense: 1100000000000, // ~$1.1T annualized
   averageInterestRate: 3.32,
   yieldCurveSpread: 0.15,
+  realYield10y: 2.1,
+  breakeven10y: 2.3,
   lastUpdated: new Date().toISOString().split('T')[0],
 };
 
@@ -41,6 +43,8 @@ export async function GET() {
             interestExpense: latest.interestExpense ? parseFloat(latest.interestExpense) : DEFAULT_METRICS.interestExpense,
             averageInterestRate: latest.averageInterestRate ? parseFloat(latest.averageInterestRate) : DEFAULT_METRICS.averageInterestRate,
             yieldCurveSpread: latest.yieldCurveSpread ? parseFloat(latest.yieldCurveSpread) : DEFAULT_METRICS.yieldCurveSpread,
+            realYield10y: latest.realYield10y ? parseFloat(latest.realYield10y) : DEFAULT_METRICS.realYield10y,
+            breakeven10y: latest.breakeven10y ? parseFloat(latest.breakeven10y) : DEFAULT_METRICS.breakeven10y,
             lastUpdated: latest.recordDate,
           };
           return NextResponse.json(metrics);
