@@ -1,8 +1,8 @@
 /**
  * Treasury API Client
- * 
+ *
  * Handles fetching data from the US Treasury Fiscal Data API.
- * Implements proper error handling, rate limiting, and pagination.
+ * Implements proper error handling, rate limiting, pagination, and retry logic.
  */
 
 import type {
@@ -21,6 +21,10 @@ const BASE_URL = process.env.TREASURY_API_BASE_URL || 'https://api.fiscaldata.tr
 // Rate limiting: Treasury API allows 1000 requests per hour
 const RATE_LIMIT_DELAY = 100; // ms between requests
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+
 interface FetchOptions {
   pageSize?: number;
   sort?: string;
@@ -29,47 +33,101 @@ interface FetchOptions {
 }
 
 /**
- * Generic fetch wrapper with error handling
+ * Delay execution for a specified number of milliseconds
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Retry wrapper with exponential backoff
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  maxRetries: number = MAX_RETRIES
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const isLastAttempt = attempt === maxRetries;
+
+      // Check if error is retryable (network errors, 5xx responses)
+      const isRetryable =
+        lastError.message.includes('fetch failed') ||
+        lastError.message.includes('network') ||
+        lastError.message.includes('ECONNRESET') ||
+        lastError.message.includes('ETIMEDOUT') ||
+        /Treasury API error: 5\d\d/.test(lastError.message);
+
+      if (!isRetryable || isLastAttempt) {
+        console.error(`[Treasury API] ${operationName} failed after ${attempt} attempt(s):`, lastError.message);
+        throw lastError;
+      }
+
+      // Calculate exponential backoff delay
+      const retryDelay = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1);
+      console.warn(
+        `[Treasury API] ${operationName} failed (attempt ${attempt}/${maxRetries}). ` +
+        `Retrying in ${retryDelay}ms... Error: ${lastError.message}`
+      );
+      await delay(retryDelay);
+    }
+  }
+
+  // Should never reach here, but TypeScript requires a return
+  throw lastError;
+}
+
+/**
+ * Generic fetch wrapper with error handling and retry logic
  */
 async function fetchFromTreasury<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<TreasuryApiResponse<T>> {
   const { pageSize = 1000, sort, filter, fields } = options;
-  
+
   const params = new URLSearchParams();
   params.set('page[size]', pageSize.toString());
-  
+
   if (sort) params.set('sort', sort);
   if (filter) params.set('filter', filter);
   if (fields?.length) params.set('fields', fields.join(','));
-  
+
   const url = `${BASE_URL}${endpoint}?${params.toString()}`;
-  
-  console.log(`[Treasury API] Fetching: ${url}`);
-  
-  const response = await fetch(url, {
-    headers: {
-      'Accept': 'application/json',
-    },
-    next: { revalidate: 3600 }, // Cache for 1 hour in Next.js
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Treasury API error: ${response.status} ${response.statusText}`);
-  }
-  
-  const data = await response.json() as TreasuryApiResponse<T>;
-  
-  console.log(`[Treasury API] Received ${data.data.length} records (total: ${data.meta['total-count']})`);
-  
-  return data;
+
+  return withRetry(async () => {
+    console.log(`[Treasury API] Fetching: ${url}`);
+
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+      },
+      next: { revalidate: 3600 }, // Cache for 1 hour in Next.js
+    });
+
+    if (!response.ok) {
+      throw new Error(`Treasury API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json() as TreasuryApiResponse<T>;
+
+    console.log(`[Treasury API] Received ${data.data.length} records (total: ${data.meta['total-count']})`);
+
+    return data;
+  }, `fetch ${endpoint}`);
 }
 
 /**
  * Fetch all pages of data (with pagination)
+ * Reserved for future use with large datasets
  */
-async function fetchAllPages<T>(
+async function _fetchAllPages<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T[]> {
