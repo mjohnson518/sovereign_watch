@@ -1,26 +1,30 @@
 /**
  * Database Connection
- * 
+ *
  * Uses Vercel Postgres with Drizzle ORM.
  * Supports running without database for local development (API-only mode).
  */
 
+import { sql } from '@vercel/postgres';
+import { drizzle } from 'drizzle-orm/vercel-postgres';
+import type { VercelPgDatabase } from 'drizzle-orm/vercel-postgres';
 import * as schema from './schema';
+
+// Type for our database instance
+type Database = VercelPgDatabase<typeof schema>;
 
 // Check if database is configured
 const isDatabaseConfigured = !!(
-  process.env.POSTGRES_URL || 
+  process.env.POSTGRES_URL ||
   process.env.DATABASE_URL
 );
 
 const skipDatabase = process.env.SKIP_DATABASE === 'true';
 
 // Lazy initialization to avoid connection errors on import
-let _db: ReturnType<typeof createDb> | null = null;
+let _db: Database | null = null;
 
-function createDb() {
-  const { sql } = require('@vercel/postgres');
-  const { drizzle } = require('drizzle-orm/vercel-postgres');
+function createDb(): Database {
   return drizzle(sql, { schema });
 }
 
@@ -49,15 +53,15 @@ export function getDb() {
  * Legacy export for backwards compatibility.
  * Throws if database is not configured.
  */
-export const db = new Proxy({} as ReturnType<typeof createDb>, {
-  get(target, prop) {
+export const db = new Proxy({} as Database, {
+  get(target, prop: keyof Database) {
     const instance = getDb();
     if (!instance) {
       throw new Error(
         'Database not configured. Set POSTGRES_URL environment variable or use getDb() for optional database access.'
       );
     }
-    return (instance as any)[prop];
+    return instance[prop];
   },
 });
 
