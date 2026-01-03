@@ -1,6 +1,6 @@
 /**
  * API Route: /api/auctions
- * 
+ *
  * Returns auction demand data (bid-to-cover ratios).
  * Prioritizes Database, falls back to Live API.
  */
@@ -12,6 +12,8 @@ import { aggregateAuctionDemand, calculateAuctionStats } from '@/lib/etl/aggrega
 import { getDb, treasuryAuctions, type TreasuryAuction } from '@/lib/db';
 import { desc, gte } from 'drizzle-orm';
 import type { AuctionDemandData } from '@/lib/types/treasury';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
+import { validateTimeframe, validateSecurityTypes } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 86400; // Revalidate daily
@@ -35,14 +37,43 @@ interface AuctionsResponse {
 }
 
 export async function GET(request: Request) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`auctions:${clientId}`, RATE_LIMITS.data);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil(rateLimitResult.resetIn / 1000).toString(),
+        },
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
-  
-  // Query parameters
-  const timeframe = searchParams.get('timeframe') || '1y';
-  // Default types to Note/Bond if not specified
-  const typesParam = searchParams.get('types');
-  const types = typesParam ? typesParam.split(',') : ['NOTE', 'BOND'];
-  
+
+  // Validate query parameters
+  const timeframeValidation = validateTimeframe(searchParams.get('timeframe'));
+  if (!timeframeValidation.isValid) {
+    return NextResponse.json(
+      { error: timeframeValidation.error },
+      { status: 400 }
+    );
+  }
+  const timeframe = timeframeValidation.value;
+
+  const typesValidation = validateSecurityTypes(searchParams.get('types'));
+  if (!typesValidation.isValid) {
+    return NextResponse.json(
+      { error: typesValidation.error },
+      { status: 400 }
+    );
+  }
+  const types = typesValidation.value;
+
   // Calculate start date based on timeframe
   const now = new Date();
   switch (timeframe) {

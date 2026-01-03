@@ -1,6 +1,6 @@
 /**
  * API Route: /api/ownership
- * 
+ *
  * Returns ownership/composition data for the Sankey diagram.
  * Uses static estimates from constants, scaled by live total debt.
  */
@@ -18,6 +18,7 @@ import {
   FED_HOLDINGS,
   FOREIGN_HOLDERS,
 } from '@/lib/constants/ownership';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -44,12 +45,28 @@ interface OwnershipResponse {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`ownership:${clientId}`, RATE_LIMITS.data);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil(rateLimitResult.resetIn / 1000).toString(),
+        },
+      }
+    );
+  }
+
   try {
     // Try to fetch live debt to scale ownership data
     let liveTotal: number | null = null;
     let liveDate: string | null = null;
-    
+
     try {
       const rawDebt = await fetchDebtToPenny();
       if (rawDebt) {
@@ -59,7 +76,7 @@ export async function GET() {
           liveDate = cleaned.recordDate;
         }
       }
-    } catch (e) {
+    } catch {
       console.warn('[API /ownership] Could not fetch live debt, using base values');
     }
     

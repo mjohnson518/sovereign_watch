@@ -1,6 +1,6 @@
 /**
  * API Route: /api/maturity-wall
- * 
+ *
  * Returns pre-aggregated maturity wall data.
  * Prioritizes Database (cached) data, falls back to Live API.
  */
@@ -12,6 +12,8 @@ import { aggregateMaturityWall } from '@/lib/etl/aggregators';
 import { getDb, treasurySecurities } from '@/lib/db';
 import { desc, eq } from 'drizzle-orm';
 import type { MaturityWallData } from '@/lib/types/treasury';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
+import { validateYears } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 86400; // Revalidate daily
@@ -28,11 +30,33 @@ interface MaturityWallResponse {
 }
 
 export async function GET(request: Request) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`maturity-wall:${clientId}`, RATE_LIMITS.data);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil(rateLimitResult.resetIn / 1000).toString(),
+        },
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
-  
-  // Optional query params for customization
-  const yearsParam = searchParams.get('years');
-  const years = yearsParam ? parseInt(yearsParam, 10) : 10;
+
+  // Validate years parameter
+  const yearsValidation = validateYears(searchParams.get('years'));
+  if (!yearsValidation.isValid) {
+    return NextResponse.json(
+      { error: yearsValidation.error },
+      { status: 400 }
+    );
+  }
+  const years = yearsValidation.value;
   
   try {
     // 1. Try Database First (if available)

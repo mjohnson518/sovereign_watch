@@ -1,6 +1,6 @@
 /**
  * API Route: /api/debt
- * 
+ *
  * Returns the latest total debt snapshot.
  * Fetches live from Treasury API if database is empty or unavailable.
  */
@@ -11,6 +11,7 @@ import { cleanDebtRecord } from '@/lib/etl/sanitizers';
 import { getDb, dailyDebtSnapshots } from '@/lib/db';
 import { desc } from 'drizzle-orm';
 import type { DebtSummary } from '@/lib/types/treasury';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Revalidate every hour
@@ -23,7 +24,22 @@ function formatTrillions(amount: number): string {
   return `$${trillions.toFixed(2)}T`;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = checkRateLimit(`debt:${clientId}`, RATE_LIMITS.data);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil(rateLimitResult.resetIn / 1000).toString(),
+        },
+      }
+    );
+  }
   try {
     // 1. Try fetching from Database first (if available)
     const db = getDb();
