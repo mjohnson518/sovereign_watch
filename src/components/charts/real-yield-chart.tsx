@@ -20,10 +20,16 @@ const Plot = dynamic(() => import('react-plotly.js'), {
 
 const TIMEFRAMES = ['1y', '3y', '5y'];
 
+interface YieldDataPoint {
+  date: string;
+  yield10y: number;
+  realYield10y: number;
+}
+
 export function RealYieldChart() {
   const { theme } = useTheme();
   const [timeframe, setTimeframe] = useState('1y');
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<YieldDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
