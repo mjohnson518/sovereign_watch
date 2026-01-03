@@ -7,7 +7,7 @@
  * status indicators, and professional terminal aesthetic.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -28,6 +28,57 @@ const NAV_ITEMS = [
   { id: 'sources', label: 'Data Sources', shortcut: '7', icon: 'database', category: 'SYSTEM' },
   { id: 'about', label: 'About', shortcut: '8', icon: 'info', category: 'SYSTEM' },
 ];
+
+interface SidebarContentProps {
+  currentView: string;
+  onViewChange: (view: string) => void;
+  onOpenAI: () => void;
+  theme: string;
+  toggleTheme: () => void;
+}
+
+// Desktop Sidebar component
+function DesktopSidebar({ currentView, onViewChange, onOpenAI, theme, toggleTheme }: SidebarContentProps) {
+  return (
+    <aside className="w-56 bg-sidebar border-r border-sidebar-border flex flex-col hidden md:flex z-20 relative">
+      {/* Left accent line */}
+      <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary via-primary/50 to-transparent" />
+      <SidebarContent
+        currentView={currentView}
+        onViewChange={onViewChange}
+        onOpenAI={onOpenAI}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+    </aside>
+  );
+}
+
+// Mobile Navigation component
+function MobileNav({ currentView, onViewChange, onOpenAI, theme, toggleTheme }: SidebarContentProps) {
+  return (
+    <div className="md:hidden fixed top-2 left-2 z-50">
+      <Sheet>
+        <SheetTrigger asChild>
+          <button className="p-2 bg-card border border-border rounded hover:bg-muted transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-56 p-0 bg-sidebar border-sidebar-border">
+          <SidebarContent
+            currentView={currentView}
+            onViewChange={onViewChange}
+            onOpenAI={onOpenAI}
+            theme={theme}
+            toggleTheme={toggleTheme}
+          />
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
 
 export function Sidebar({ currentView, onViewChange, onOpenAI }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
@@ -66,60 +117,24 @@ export function Sidebar({ currentView, onViewChange, onOpenAI }: SidebarProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onViewChange, onOpenAI, toggleTheme]);
 
-  // Desktop Sidebar
-  const DesktopSidebar = () => (
-    <aside className="w-56 bg-sidebar border-r border-sidebar-border flex flex-col hidden md:flex z-20 relative">
-      {/* Left accent line */}
-      <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary via-primary/50 to-transparent" />
-
-      <SidebarContent
+  return (
+    <>
+      <DesktopSidebar
         currentView={currentView}
         onViewChange={onViewChange}
         onOpenAI={onOpenAI}
         theme={theme}
         toggleTheme={toggleTheme}
       />
-    </aside>
-  );
-
-  // Mobile Navigation (Hamburger)
-  const MobileNav = () => (
-    <div className="md:hidden fixed top-2 left-2 z-50">
-      <Sheet>
-        <SheetTrigger asChild>
-          <button className="p-2 bg-card border border-border rounded hover:bg-muted transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-56 p-0 bg-sidebar border-sidebar-border">
-          <SidebarContent
-            currentView={currentView}
-            onViewChange={onViewChange}
-            onOpenAI={onOpenAI}
-            theme={theme}
-            toggleTheme={toggleTheme}
-          />
-        </SheetContent>
-      </Sheet>
-    </div>
-  );
-
-  return (
-    <>
-      <DesktopSidebar />
-      <MobileNav />
+      <MobileNav
+        currentView={currentView}
+        onViewChange={onViewChange}
+        onOpenAI={onOpenAI}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
     </>
   );
-}
-
-interface SidebarContentProps {
-  currentView: string;
-  onViewChange: (view: string) => void;
-  onOpenAI: () => void;
-  theme: string;
-  toggleTheme: () => void;
 }
 
 function SidebarContent({ currentView, onViewChange, onOpenAI, theme, toggleTheme }: SidebarContentProps) {
