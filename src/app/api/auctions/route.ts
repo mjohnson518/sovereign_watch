@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { fetchAuctions } from '@/lib/etl/treasury-client';
 import { cleanAuctionRecords } from '@/lib/etl/sanitizers';
 import { aggregateAuctionDemand, calculateAuctionStats } from '@/lib/etl/aggregators';
-import { getDb, treasuryAuctions } from '@/lib/db';
+import { getDb, treasuryAuctions, type TreasuryAuction } from '@/lib/db';
 import { desc, gte } from 'drizzle-orm';
 import type { AuctionDemandData } from '@/lib/types/treasury';
 
@@ -45,8 +45,6 @@ export async function GET(request: Request) {
   
   // Calculate start date based on timeframe
   const now = new Date();
-  let startDate: string;
-  
   switch (timeframe) {
     case '1y': now.setFullYear(now.getFullYear() - 1); break;
     case '3y': now.setFullYear(now.getFullYear() - 3); break;
@@ -54,7 +52,7 @@ export async function GET(request: Request) {
     case '10y': now.setFullYear(now.getFullYear() - 10); break;
     default: now.setFullYear(now.getFullYear() - 1);
   }
-  startDate = now.toISOString().split('T')[0];
+  const startDate = now.toISOString().split('T')[0];
   
   try {
     // 1. Try Database (if available)
@@ -69,7 +67,7 @@ export async function GET(request: Request) {
         if (dbAuctions.length > 0) {
           // Filter by type in memory to match string inputs to enum
           // The DB stores standardized ENUMs: 'BILL', 'NOTE', 'BOND', etc.
-          const filteredDbAuctions = dbAuctions.filter(a => 
+          const filteredDbAuctions = dbAuctions.filter((a: TreasuryAuction) =>
             types.includes(a.securityType)
           );
           
