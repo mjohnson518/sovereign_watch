@@ -303,7 +303,6 @@ function ThresholdIndicator({
   const isWarning = inverted
     ? current >= criticalAt && current < warningAt
     : current >= warningAt && current < criticalAt;
-  const isNormal = inverted ? current >= warningAt : current < warningAt;
 
   const status = isCritical ? 'critical' : isWarning ? 'warning' : 'normal';
   const statusColors = {

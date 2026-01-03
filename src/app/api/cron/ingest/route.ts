@@ -31,7 +31,7 @@ export const maxDuration = 300; // 5 minutes max
 /**
  * Verify the request is from a valid cron job
  */
-async function verifyCronSecret(request: Request): Promise<boolean> {
+async function verifyCronSecret(_request: Request): Promise<boolean> {
   const headersList = await headers();
   const authHeader = headersList.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
@@ -257,11 +257,12 @@ export async function GET(request: Request) {
     // Step 5: Pre-compute aggregates
     console.log('[Cron] Step 5: Computing aggregates...');
     try {
-      const { aggregateMaturityWall } = await import('@/lib/etl/aggregators');
+      // Import aggregator (reserved for future use)
+      await import('@/lib/etl/aggregators');
       // We need to fetch the latest securities from DB to aggregate
       // For now, we'll rely on the fetched data in memory if available, or skip
       // In a full implementation, query `treasurySecurities` here
-      
+
       // Mock success for now as we populated the DB
       results.aggregates = {
         success: true,

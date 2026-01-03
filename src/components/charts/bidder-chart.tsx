@@ -19,9 +19,10 @@ const Plot = dynamic(() => import('react-plotly.js'), {
   loading: () => <ChartSkeleton type="area" className="h-[400px]" />
 });
 
-interface AuctionsResponse {
+// Response type for auction API (used in fetch typing)
+type AuctionsResponse = {
   data: AuctionDemandData[];
-}
+};
 
 const TIMEFRAMES = ['1y', '3y', '5y', '10y'];
 

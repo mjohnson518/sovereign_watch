@@ -7,7 +7,7 @@
  */
 
 import { DataPanel, Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge, StatusBadge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { HistoricalChart } from '@/components/charts/historical-chart';
 
 export function HistoricalView() {
