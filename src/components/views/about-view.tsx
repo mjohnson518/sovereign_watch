@@ -46,7 +46,7 @@ export function AboutView() {
             policymakers, researchers, and citizens.
           </p>
           <p>
-            We believe understanding the "plumbing of finance" — from auction demand to maturity
+            We believe understanding the &ldquo;plumbing of finance&rdquo; — from auction demand to maturity
             walls — is critical for navigating an increasingly complex fiscal landscape.
           </p>
         </div>
